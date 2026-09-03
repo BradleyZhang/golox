@@ -114,7 +114,7 @@ func (s *Scanner) scanToken() {
 		} else if isAlpha(c) {
 			s.identifier()
 		} else {
-			lox.error(s.line, "Unexpected character.")
+			GlobalLox.LineError(s.line, "Unexpected character.")
 		}
 	}
 }
@@ -130,8 +130,10 @@ func (s *Scanner) identifier() {
 	tokenType, ok := keywords[text]
 	if !ok {
 		tokenType = Identifier
+		s.addToken(tokenType, text)
+	} else {
+		s.addToken(tokenType, nil)
 	}
-	s.addToken(tokenType, nil)
 }
 func (s *Scanner) string() {
 	for s.peek() != '"' && !s.isAtEnd() {
@@ -141,7 +143,7 @@ func (s *Scanner) string() {
 		s.advance()
 	}
 	if s.isAtEnd() {
-		lox.error(s.line, "Unterminated string.")
+		GlobalLox.LineError(s.line, "Unterminated string.")
 		return
 	}
 	s.advance()
