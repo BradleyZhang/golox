@@ -9,7 +9,7 @@ import (
 )
 
 var (
-	lox = Lox{}
+	GlobalLox = Lox{}
 )
 
 type Lox struct {
@@ -62,14 +62,33 @@ func (l *Lox) runPrompt() error {
 func (l *Lox) run(source string) {
 	scanner := NewScanner(source)
 	tokens := scanner.ScanTokens()
+	fmt.Println("##### tokens #####")
 	for _, token := range tokens {
 		fmt.Println(token.ToString())
 	}
+
+	fmt.Println("##### ST #####")
+	parser := NewParser(tokens)
+	expression := parser.Parse()
+	if l.hadError {
+		return
+	}
+	fmt.Print(expression.String())
+	fmt.Println()
 }
 
-func (l *Lox) error(line int, msg string) {
+func (l *Lox) LineError(line int, msg string) {
 	l.report(line, "", msg)
 }
+func (l *Lox) TokenError(token Token, msg string) {
+	if token.Type == EOF {
+		l.report(token.Line, "at end", msg)
+	} else {
+		l.report(token.Line, "at '"+token.Lexeme+"'", msg)
+	}
+}
+
+// func (l *Lox)
 func (l *Lox) report(line int, where string, msg string) {
 	fmt.Fprintln(os.Stderr, "[line ", line, "] Error", where, ": ", msg)
 	l.hadError = true

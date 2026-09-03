@@ -16,5 +16,5 @@ func (t *Token) Init(tokenType TokenType, lexeme string, literal any, line int) 
 	t.Line = line
 }
 func (t *Token) ToString() string {
-	return fmt.Sprintf("%v %s %v", t.Type, t.Lexeme, t.Literal)
+	return fmt.Sprintf("%v %s %v %v", t.Type, t.Lexeme, t.Literal, t.Line)
 }
