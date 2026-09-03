@@ -169,7 +169,7 @@ func (s *Scanner) advance() byte {
 }
 func (s *Scanner) addToken(tokenType TokenType, literal any) {
 	text := s.source[s.start:s.current]
-	s.tokens = append(s.tokens, Token{tokenType, text, literal, s.current})
+	s.tokens = append(s.tokens, Token{tokenType, text, literal, s.line})
 }
 func (s *Scanner) match(expected byte) bool {
 	if s.isAtEnd() {
