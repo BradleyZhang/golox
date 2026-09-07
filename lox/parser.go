@@ -20,7 +20,9 @@
 // term           → factor ( ( "-" | "+" ) factor )* ; （加减）
 // factor         → unary ( ( "/" | "*" ) unary )* ; （乘除）
 // unary          → ( "!" | "-" ) unary
-//                | primary ; （一元运算符）
+//                | binaryWithoutLeftOperand ; （一元运算符）
+// binaryWithoutLeftOperand → 二元运算符 错误处理
+//				  | primary
 // primary        → NUMBER | STRING | "true" | "false" | "nil"
 //                | "(" expression ")" ; （字面量和括号表达式）
 
@@ -175,6 +177,34 @@ func (p *Parser) unary() (Expr, error) {
 			return nil, err
 		}
 		return Unary{operator, right}, nil
+	}
+	return p.binaryWithoutLeftOperand()
+}
+
+// 错误处理
+// 没有左操作数的二元操作符
+func (p *Parser) binaryWithoutLeftOperand() (Expr, error) {
+	switch {
+	case p.match(Comma):
+		err := p.Error(p.previous(), "Expect left-hand operand before binary operator")
+		p.comma() // TODO 同步处理暂时无法测试，之后判断是应该comma 还是高一级，后面同理
+		return nil, err
+	case p.match(BangEqual, EqualEqual):
+		err := p.Error(p.previous(), "Expect left-hand operand before binary operator")
+		p.equality()
+		return nil, err
+	case p.match(Less, LessEqual, Greater, GreaterEqual):
+		err := p.Error(p.previous(), "Expect left-hand operand before binary operator")
+		p.comparision()
+		return nil, err
+	case p.match(Minus, Plus):
+		err := p.Error(p.previous(), "Expect left-hand operand before binary operator")
+		p.term()
+		return nil, err
+	case p.match(Slash, Star):
+		err := p.Error(p.previous(), "Expect left-hand operand before binary operator")
+		p.factor()
+		return nil, err
 	}
 	return p.primary()
 }
