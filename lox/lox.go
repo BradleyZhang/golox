@@ -73,7 +73,8 @@ func (l *Lox) run(source string) {
 	if l.hadError {
 		return
 	}
-	fmt.Print(expression.String())
+	astPrinter := AstPrinter{}
+	fmt.Print(astPrinter.Print(expression))
 	fmt.Println()
 }
 

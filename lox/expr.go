@@ -1,10 +1,5 @@
 package lox
 
-import (
-	"fmt"
-	"strings"
-)
-
 // literal        → NUMBER | STRING | "true" | "false" | "nil" ;
 // grouping       → "(" expression ")" ;
 // unary          → ( "-" | "!" ) expression ;
@@ -13,7 +8,7 @@ import (
 // operator       → "==" | "!=" | "<" | "<=" | ">" | ">="
 
 type Expr interface {
-	String() string
+	exprNode()
 }
 type Binary struct {
 	left     Expr
@@ -38,33 +33,13 @@ type Ternary struct {
 	right     Expr
 }
 
-func (b Binary) String() string {
-	return parenthesized(b.operator.Lexeme, b.left, b.right)
+func (b Binary) exprNode() {
 }
-func (g Grouping) String() string {
-	return parenthesized("group", g.expression)
+func (g Grouping) exprNode() {
 }
-func (l Literal) String() string {
-	if l.value == nil {
-		return "nil"
-	}
-	return fmt.Sprint(l.value)
+func (l Literal) exprNode() {
 }
-func (u Unary) String() string {
-	return parenthesized(u.operator.Lexeme, u.right)
+func (u Unary) exprNode() {
 }
-func (t Ternary) String() string {
-	return parenthesized(t.operatorL.Lexeme+t.operatorR.Lexeme, t.left, t.middle, t.right)
-}
-
-func parenthesized(name string, exprs ...Expr) string {
-	var builder strings.Builder
-	builder.WriteString("(")
-	builder.WriteString(name)
-	for _, expr := range exprs {
-		builder.WriteString(" ")
-		builder.WriteString(expr.String())
-	}
-	builder.WriteString(")")
-	return builder.String()
+func (t Ternary) exprNode() {
 }
