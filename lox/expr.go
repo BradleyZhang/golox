@@ -9,48 +9,52 @@ import (
 // grouping       → "(" expression ")" ;
 // unary          → ( "-" | "!" ) expression ;
 // binary         → expression operator expression ;
+// ternary        → expression operator expression operator expression ;
 // operator       → "==" | "!=" | "<" | "<=" | ">" | ">="
 
 type Expr interface {
 	String() string
 }
-
 type Binary struct {
 	left     Expr
 	operator Token
 	right    Expr
 }
+type Grouping struct {
+	expression Expr
+}
+type Literal struct {
+	value any
+}
+type Unary struct {
+	operator Token
+	right    Expr
+}
+type Ternary struct {
+	left      Expr
+	operatorL Token
+	middle    Expr
+	operatorR Token
+	right     Expr
+}
 
 func (b Binary) String() string {
 	return parenthesized(b.operator.Lexeme, b.left, b.right)
 }
-
-type Grouping struct {
-	expression Expr
-}
-
 func (g Grouping) String() string {
 	return parenthesized("group", g.expression)
 }
-
-type Literal struct {
-	value any
-}
-
 func (l Literal) String() string {
 	if l.value == nil {
 		return "nil"
 	}
 	return fmt.Sprint(l.value)
 }
-
-type Unary struct {
-	operator Token
-	right    Expr
-}
-
 func (u Unary) String() string {
 	return parenthesized(u.operator.Lexeme, u.right)
+}
+func (t Ternary) String() string {
+	return parenthesized(t.operatorL.Lexeme+t.operatorR.Lexeme, t.left, t.middle, t.right)
 }
 
 func parenthesized(name string, exprs ...Expr) string {

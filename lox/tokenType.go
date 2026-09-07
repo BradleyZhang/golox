@@ -4,17 +4,19 @@ type TokenType int
 
 const (
 	// Single-character tokens.
-	LeftParen  TokenType = 0  // (
-	RightParen TokenType = 1  // )
-	LeftBrace  TokenType = 2  // {
-	RightBrace TokenType = 3  // }
-	Comma      TokenType = 4  // ,
-	Dot        TokenType = 5  // .
-	Minus      TokenType = 6  // -
-	Plus       TokenType = 7  // +
-	Semicolon  TokenType = 8  // ;
-	Slash      TokenType = 9  // /
-	Star       TokenType = 10 // *
+	LeftParen    TokenType = 0  // (
+	RightParen   TokenType = 1  // )
+	LeftBrace    TokenType = 2  // {
+	RightBrace   TokenType = 3  // }
+	Comma        TokenType = 4  // ,
+	Dot          TokenType = 5  // .
+	Minus        TokenType = 6  // -
+	Plus         TokenType = 7  // +
+	Semicolon    TokenType = 8  // ;
+	Slash        TokenType = 9  // /
+	Star         TokenType = 10 // *
+	QuestionMark TokenType = 39 // ?
+	Colon        TokenType = 40 // :
 
 	// One or two character tokens.
 	Bang         TokenType = 11 // !
