@@ -111,7 +111,7 @@ func (s *Scanner) scanToken() {
 		s.line++
 	// string literal
 	case '"':
-
+		s.string()
 	default:
 		if isDigit(c) {
 			s.number()
