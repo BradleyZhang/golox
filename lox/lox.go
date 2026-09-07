@@ -9,11 +9,19 @@ import (
 )
 
 var (
-	GlobalLox = Lox{}
+	GlobalLox = NewLox()
 )
 
 type Lox struct {
-	hadError bool
+	hadError        bool
+	hadRuntimeError bool
+	interpreter     Interpreter
+}
+
+func NewLox() *Lox {
+	return &Lox{
+		interpreter: Interpreter{},
+	}
 }
 
 func (l *Lox) Main(args []string) {
@@ -39,6 +47,9 @@ func (l *Lox) runFile(path string) error {
 	if l.hadError {
 		os.Exit(65)
 	}
+	if l.hadRuntimeError {
+		os.Exit(70)
+	}
 	return nil
 }
 
@@ -63,9 +74,7 @@ func (l *Lox) run(source string) {
 	scanner := NewScanner(source)
 	tokens := scanner.ScanTokens()
 	fmt.Println("##### tokens #####")
-	for _, token := range tokens {
-		fmt.Println(token.ToString())
-	}
+	fmt.Println(PrintTokens(tokens))
 
 	fmt.Println("##### ST #####")
 	parser := NewParser(tokens)
@@ -76,6 +85,10 @@ func (l *Lox) run(source string) {
 	astPrinter := AstPrinter{}
 	fmt.Print(astPrinter.Print(expression))
 	fmt.Println()
+
+	fmt.Println("##### Value #####")
+	l.interpreter.Interpret(expression)
+
 }
 
 func (l *Lox) LineError(line int, msg string) {
@@ -87,6 +100,10 @@ func (l *Lox) TokenError(token Token, msg string) {
 	} else {
 		l.report(token.Line, "at '"+token.Lexeme+"'", msg)
 	}
+}
+func (l *Lox) RuntimeError(err *RuntimeError) {
+	fmt.Fprintln(os.Stderr, err.Error(), "\n[line ", err.Token.Line, "]")
+	l.hadRuntimeError = true
 }
 
 // func (l *Lox)
