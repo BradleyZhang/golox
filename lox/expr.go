@@ -8,7 +8,14 @@ package lox
 // operator       → "==" | "!=" | "<" | "<=" | ">" | ">="
 
 type Expr interface {
-	exprNode()
+	Accept(visitor ExprVisitor) any
+}
+type ExprVisitor interface {
+	VisitBinary(b Binary) any
+	VisitGrouping(g Grouping) any
+	VisitLiteral(l Literal) any
+	VisitUnary(u Unary) any
+	VisitTernary(t Ternary) any
 }
 type Binary struct {
 	left     Expr
@@ -33,13 +40,18 @@ type Ternary struct {
 	right     Expr
 }
 
-func (b Binary) exprNode() {
+func (b Binary) Accept(visitor ExprVisitor) any {
+	return visitor.VisitBinary(b)
 }
-func (g Grouping) exprNode() {
+func (g Grouping) Accept(visitor ExprVisitor) any {
+	return visitor.VisitGrouping(g)
 }
-func (l Literal) exprNode() {
+func (l Literal) Accept(visitor ExprVisitor) any {
+	return visitor.VisitLiteral(l)
 }
-func (u Unary) exprNode() {
+func (u Unary) Accept(visitor ExprVisitor) any {
+	return visitor.VisitUnary(u)
 }
-func (t Ternary) exprNode() {
+func (t Ternary) Accept(visitor ExprVisitor) any {
+	return visitor.VisitTernary(t)
 }
