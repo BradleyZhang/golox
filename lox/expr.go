@@ -11,11 +11,11 @@ type Expr interface {
 	Accept(visitor ExprVisitor) any
 }
 type ExprVisitor interface {
-	VisitBinary(b Binary) any
-	VisitGrouping(g Grouping) any
-	VisitLiteral(l Literal) any
-	VisitUnary(u Unary) any
-	VisitTernary(t Ternary) any
+	visitBinary(b Binary) any
+	visitGrouping(g Grouping) any
+	visitLiteral(l Literal) any
+	visitUnary(u Unary) any
+	visitTernary(t Ternary) any
 }
 type Binary struct {
 	left     Expr
@@ -41,17 +41,17 @@ type Ternary struct {
 }
 
 func (b Binary) Accept(visitor ExprVisitor) any {
-	return visitor.VisitBinary(b)
+	return visitor.visitBinary(b)
 }
 func (g Grouping) Accept(visitor ExprVisitor) any {
-	return visitor.VisitGrouping(g)
+	return visitor.visitGrouping(g)
 }
 func (l Literal) Accept(visitor ExprVisitor) any {
-	return visitor.VisitLiteral(l)
+	return visitor.visitLiteral(l)
 }
 func (u Unary) Accept(visitor ExprVisitor) any {
-	return visitor.VisitUnary(u)
+	return visitor.visitUnary(u)
 }
 func (t Ternary) Accept(visitor ExprVisitor) any {
-	return visitor.VisitTernary(t)
+	return visitor.visitTernary(t)
 }
