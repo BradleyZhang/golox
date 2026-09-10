@@ -16,115 +16,118 @@ func (e *RuntimeError) Error() string {
 	return e.Message
 }
 func (a *Interpreter) Interpret(expr Expr) {
-	v, err := a.value(expr)
-	if err != nil {
-		GlobalLox.RuntimeError(err)
+	result := a.evaluate(expr)
+	if result.err != nil {
+		GlobalLox.RuntimeError(result.err)
 		return
 	}
-	fmt.Println(stringify(v))
+	fmt.Println(stringify(result.value))
 }
 
-// TODO：断言失败处理
-func (a *Interpreter) value(expr Expr) (any, *RuntimeError) {
-	switch e := expr.(type) {
-	case Binary:
-		left, err := a.value(e.left)
-		if err != nil {
-			return nil, err
-		}
-		right, _err := a.value(e.right)
-		if _err != nil {
-			return nil, _err
-		}
-		switch e.operator.Type {
-		case Minus, Slash, Star, Greater, GreaterEqual, Less, LessEqual:
-			l, okL := left.(float64)
-			r, okR := right.(float64)
-			if !okL || !okR {
-				return nil, &RuntimeError{e.operator, "Operand must be a number."}
-			}
-			switch e.operator.Type {
-			case Minus:
-				return l - r, nil
-			case Slash:
-				return l / r, nil
-			case Star:
-				return l * r, nil
-			case Greater:
-				return l > r, nil
-			case GreaterEqual:
-				return l >= r, nil
-			case Less:
-				return l < r, nil
-			case LessEqual:
-				return l <= r, nil
-			}
-		case Plus:
-			{
-				l, okL := left.(float64)
-				r, okR := right.(float64)
-				if okL && okR {
-					return l + r, nil
-				}
-			}
-			{
-				l, okL := left.(string)
-				r, okR := right.(string)
-				if okL && okR {
-					return l + r, nil
-				}
-			}
-			return nil, &RuntimeError{e.operator, "Operands must be two numbers or two strings."}
+type evalResult struct { //evaluate result
+	value any
+	err   *RuntimeError
+}
 
-		case BangEqual:
-			return !isEqual(left, right), nil
-		case EqualEqual:
-			return isEqual(left, right), nil
+func (a *Interpreter) evaluate(expr Expr) evalResult {
+	return expr.Accept(a).(evalResult)
+}
 
+func (i *Interpreter) visitBinary(b *Binary) any {
+	left := i.evaluate(b.left)
+	if left.err != nil {
+		return evalResult{nil, left.err}
+	}
+	right := i.evaluate(b.right)
+	if right.err != nil {
+		return evalResult{nil, right.err}
+	}
+	switch b.operator.Type {
+	case Minus, Slash, Star, Greater, GreaterEqual, Less, LessEqual:
+		l, okL := left.value.(float64)
+		r, okR := right.value.(float64)
+		if !okL || !okR {
+			return evalResult{nil, &RuntimeError{b.operator, "Operand must be a number."}}
 		}
-	case Grouping:
-		return a.value(e.expression)
-	case Literal:
-		return e.value, nil
-	case Unary:
-		right, err := a.value(e.right)
-		if err != nil {
-			return nil, err
-		}
-		switch e.operator.Type {
+		switch b.operator.Type {
 		case Minus:
-			r, ok := right.(float64)
-			if !ok {
-				return nil, &RuntimeError{e.operator, "Operand must be a number."}
-			}
-			return -(r), nil
-		case Bang:
-			return !isTruthy(right), nil
+			return evalResult{l - r, nil}
+		case Slash:
+			return evalResult{l / r, nil}
+		case Star:
+			return evalResult{l * r, nil}
+		case Greater:
+			return evalResult{l > r, nil}
+		case GreaterEqual:
+			return evalResult{l >= r, nil}
+		case Less:
+			return evalResult{l < r, nil}
+		case LessEqual:
+			return evalResult{l <= r, nil}
 		}
+	case Plus:
+		{
+			l, okL := left.value.(float64)
+			r, okR := right.value.(float64)
+			if okL && okR {
+				return evalResult{l + r, nil}
+			}
+		}
+		{
+			l, okL := left.value.(string)
+			r, okR := right.value.(string)
+			if okL && okR {
+				return evalResult{l + r, nil}
+			}
+		}
+		return evalResult{nil, &RuntimeError{b.operator, "Operands must be two numbers or two strings."}}
+	case BangEqual:
+		return evalResult{!isEqual(left.value, right.value), nil}
+	case EqualEqual:
+		return evalResult{isEqual(left.value, right.value), nil}
 
-	case Ternary:
-		if e.operatorL.Type == QuestionMark && e.operatorR.Type == Colon {
-			left, err := a.value(e.left)
-			if err != nil {
-				return nil, err
-			}
-			middle, err := a.value(e.middle)
-			if err != nil {
-				return nil, err
-			}
-			right, err := a.value(e.right)
-			if err != nil {
-				return nil, err
-			}
-			if isTruthy(left) {
-				return middle, nil
-			} else {
-				return right, nil
-			}
-		}
 	}
 	// Unreachable
-	return nil, &RuntimeError{Token{}, "unreachable"} // TODO 错误信息
+	return evalResult{nil, &RuntimeError{Token{}, "interpreter binary unreachable"}}
+}
+func (i *Interpreter) visitGrouping(g *Grouping) any {
+	return i.evaluate(g.expression)
+}
+func (i *Interpreter) visitLiteral(l *Literal) any {
+	return evalResult{l.value, nil}
+}
+func (i *Interpreter) visitUnary(u *Unary) any {
+	right := i.evaluate(u.right)
+	if right.err != nil {
+		return evalResult{nil, right.err}
+	}
+	switch u.operator.Type {
+	case Minus:
+		r, ok := right.value.(float64)
+		if !ok {
+			return evalResult{nil, &RuntimeError{u.operator, "Operand must be a number."}}
+		}
+		return evalResult{-(r), nil}
+	case Bang:
+		return evalResult{!isTruthy(right.value), nil}
+	}
+	// Unreachable
+	return evalResult{nil, &RuntimeError{Token{}, "interpreter unary unreachable"}}
+}
+func (i *Interpreter) visitTernary(t *Ternary) any {
+	if t.operatorL.Type == QuestionMark && t.operatorR.Type == Colon {
+		left := i.evaluate(t.left)
+		if left.err != nil {
+			return evalResult{nil, left.err}
+		}
+
+		if isTruthy(left.value) {
+			return i.evaluate(t.middle)
+		}
+		return i.evaluate(t.right)
+	}
+	// Unreachable
+	return evalResult{nil, &RuntimeError{Token{}, "interpreter ternary unreachable"}}
 }
 func isTruthy(v any) bool {
 	if v == nil {
