@@ -79,6 +79,9 @@ func (i *Interpreter) visitBinary(b *Binary) any {
 			if okL && okR {
 				return evalResult{l + r, nil}
 			}
+			if okL || okR {
+				return evalResult{fmt.Sprint(left.value) + fmt.Sprint(right.value), nil}
+			}
 		}
 		return evalResult{nil, &RuntimeError{b.operator, "Operands must be two numbers or two strings."}}
 	case BangEqual:
