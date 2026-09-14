@@ -36,6 +36,14 @@
 // | Term  加减运算    | `-` `+`           | Left  左结合  |
 // | Factor   乘除运算 | `/` `*`           | Left  左结合  |
 // | Unary  一元运算符 | `!` `-`           | Right  右结合 |
+
+// 语句
+// program        → statement* EOF ;
+// statement      → exprStmt
+//                | printStmt ;
+
+// exprStmt       → expression ";" ;
+// printStmt      → "print" expression ";" ;
 package lox
 
 type Parser struct {
@@ -54,14 +62,52 @@ func NewParser(tokens []Token) *Parser {
 	return &Parser{tokens: tokens}
 }
 
-func (p *Parser) Parse() Expr {
+func (p *Parser) Parse() []Stmt {
+	statements := []Stmt{}
+	for !p.isAtEnd() {
+		statement, err := p.statement()
+		if err != nil {
+			return nil
+		}
+		statements = append(statements, statement)
+	}
+	return statements
+
+	// expr, err := p.expression()
+	// if err != nil {
+	// 	return nil
+	// }
+	// return expr
+}
+func (p *Parser) statement() (Stmt, error) {
+	if p.match(Print) {
+		return p.printStatement()
+	}
+	return p.expressionStatement()
+}
+func (p *Parser) printStatement() (Stmt, error) {
+	value, err := p.expression()
+	if err != nil {
+		return nil, err
+	}
+	_, err = p.consume(Semicolon, "Expect ';' after value.")
+	if err != nil {
+		return nil, err
+	}
+	return PrintStmt{value}, nil
+}
+func (p *Parser) expressionStatement() (Stmt, error) {
 	expr, err := p.expression()
 	if err != nil {
-		return nil
+		return nil, err
 	}
-	return expr
-}
+	_, err = p.consume(Semicolon, "Expect ';' after value.")
+	if err != nil {
+		return nil, err
+	}
+	return Expression{expr}, nil
 
+}
 func (p *Parser) expression() (Expr, error) {
 	return p.comma()
 }

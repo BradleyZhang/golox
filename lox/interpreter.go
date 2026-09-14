@@ -7,6 +7,7 @@ import (
 
 type Interpreter struct {
 }
+
 type RuntimeError struct {
 	Token   Token
 	Message string
@@ -15,13 +16,13 @@ type RuntimeError struct {
 func (e *RuntimeError) Error() string {
 	return e.Message
 }
-func (a *Interpreter) Interpret(expr Expr) {
-	result := a.evaluate(expr)
-	if result.err != nil {
-		GlobalLox.RuntimeError(result.err)
-		return
+func (a *Interpreter) Interpret(statements []Stmt) {
+	for _, stmt := range statements {
+		if err := a.excute(stmt); err != nil {
+			GlobalLox.RuntimeError(err)
+		}
 	}
-	fmt.Println(stringify(result.value))
+
 }
 
 type evalResult struct { //evaluate result
@@ -29,10 +30,33 @@ type evalResult struct { //evaluate result
 	err   *RuntimeError
 }
 
+func (a *Interpreter) excute(stmt Stmt) *RuntimeError {
+	if err, ok := stmt.Accept(a).(*RuntimeError); ok {
+		return err
+	}
+	return nil
+}
+
 func (a *Interpreter) evaluate(expr Expr) evalResult {
 	return expr.Accept(a).(evalResult)
 }
 
+// impl StmtVisitor
+func (a *Interpreter) visitExpression(e *Expression) any {
+	evalResult := a.evaluate(e.expression)
+	return evalResult.err
+}
+
+func (a *Interpreter) visitPrintStmt(p *PrintStmt) any {
+	evalResult := a.evaluate(p.expression)
+	if evalResult.err != nil {
+		return evalResult.err
+	}
+	fmt.Println(stringify(evalResult.value))
+	return nil
+}
+
+// impl ExprVisitor
 func (i *Interpreter) visitBinary(b *Binary) any {
 	left := i.evaluate(b.left)
 	if left.err != nil {

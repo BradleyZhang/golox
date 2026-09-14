@@ -76,18 +76,13 @@ func (l *Lox) run(source string) {
 	fmt.Println("##### tokens #####")
 	fmt.Println(PrintTokens(tokens))
 
-	fmt.Println("##### ST #####")
 	parser := NewParser(tokens)
-	expression := parser.Parse()
+	statements := parser.Parse()
 	if l.hadError {
 		return
 	}
-	astPrinter := AstPrinter{}
-	fmt.Print(astPrinter.Print(expression))
-	fmt.Println()
-
-	fmt.Println("##### Value #####")
-	l.interpreter.Interpret(expression)
+	fmt.Println("##### Output #####")
+	l.interpreter.Interpret(statements)
 
 }
 
