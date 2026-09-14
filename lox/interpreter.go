@@ -53,6 +53,9 @@ func (i *Interpreter) visitBinary(b *Binary) any {
 		case Minus:
 			return evalResult{l - r, nil}
 		case Slash:
+			if r == 0 {
+				return evalResult{nil, &RuntimeError{b.operator, "Division by zero"}}
+			}
 			return evalResult{l / r, nil}
 		case Star:
 			return evalResult{l * r, nil}
