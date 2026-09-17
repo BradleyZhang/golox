@@ -42,12 +42,12 @@ func (a *Interpreter) evaluate(expr Expr) evalResult {
 }
 
 // impl StmtVisitor
-func (a *Interpreter) visitExpression(e *Expression) any {
+func (a *Interpreter) VisitExpression(e *Expression) any {
 	evalResult := a.evaluate(e.expression)
 	return evalResult.err
 }
 
-func (a *Interpreter) visitPrintStmt(p *PrintStmt) any {
+func (a *Interpreter) VisitPrintStmt(p *PrintStmt) any {
 	evalResult := a.evaluate(p.expression)
 	if evalResult.err != nil {
 		return evalResult.err
@@ -57,7 +57,7 @@ func (a *Interpreter) visitPrintStmt(p *PrintStmt) any {
 }
 
 // impl ExprVisitor
-func (i *Interpreter) visitBinary(b *Binary) any {
+func (i *Interpreter) VisitBinary(b *Binary) any {
 	left := i.evaluate(b.left)
 	if left.err != nil {
 		return evalResult{nil, left.err}
@@ -120,13 +120,13 @@ func (i *Interpreter) visitBinary(b *Binary) any {
 	// Unreachable
 	return evalResult{nil, &RuntimeError{Token{}, "interpreter binary unreachable"}}
 }
-func (i *Interpreter) visitGrouping(g *Grouping) any {
+func (i *Interpreter) VisitGrouping(g *Grouping) any {
 	return i.evaluate(g.expression)
 }
-func (i *Interpreter) visitLiteral(l *Literal) any {
+func (i *Interpreter) VisitLiteral(l *Literal) any {
 	return evalResult{l.value, nil}
 }
-func (i *Interpreter) visitUnary(u *Unary) any {
+func (i *Interpreter) VisitUnary(u *Unary) any {
 	right := i.evaluate(u.right)
 	if right.err != nil {
 		return evalResult{nil, right.err}
@@ -144,7 +144,7 @@ func (i *Interpreter) visitUnary(u *Unary) any {
 	// Unreachable
 	return evalResult{nil, &RuntimeError{Token{}, "interpreter unary unreachable"}}
 }
-func (i *Interpreter) visitTernary(t *Ternary) any {
+func (i *Interpreter) VisitTernary(t *Ternary) any {
 	if t.operatorL.Type == QuestionMark && t.operatorR.Type == Colon {
 		left := i.evaluate(t.left)
 		if left.err != nil {
