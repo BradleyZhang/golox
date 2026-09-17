@@ -18,15 +18,30 @@ func main() {
 		os.Exit(64)
 	}
 	outputDir := args[1]
-	f, err := os.OpenFile(outputDir, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0644)
-	if err != nil {
-		fmt.Fprint(os.Stderr, err.Error())
-		os.Exit(1)
+	if !strings.HasSuffix(outputDir, "/") {
+		outputDir += "/"
 	}
-	f.WriteString("package lox\n")
-	f.WriteString(comment())
-	f.WriteString(buildExpr())
-	f.WriteString(buildStmt())
+	{
+		path := outputDir + "expr.go"
+		f, err := os.OpenFile(path, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0644)
+		if err != nil {
+			fmt.Fprint(os.Stderr, err.Error())
+			os.Exit(1)
+		}
+		f.WriteString("package lox\n")
+		f.WriteString(comment())
+		f.WriteString(buildExpr())
+	}
+	{
+		path := outputDir + "stmt.go"
+		f, err := os.OpenFile(path, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0644)
+		if err != nil {
+			fmt.Fprint(os.Stderr, err.Error())
+			os.Exit(1)
+		}
+		f.WriteString("package lox\n")
+		f.WriteString(buildStmt())
+	}
 	return
 }
 func comment() string {
