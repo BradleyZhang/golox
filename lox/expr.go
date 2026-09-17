@@ -18,26 +18,26 @@ type ExprVisitor interface {
 	VisitTernary(t *Ternary) any
 }
 type Binary struct {
-	left     Expr
-	operator Token
-	right    Expr
+	Left     Expr
+	Operator Token
+	Right    Expr
 }
 type Grouping struct {
-	expression Expr
+	Expression Expr
 }
 type Literal struct {
-	value any
+	Value any
 }
 type Unary struct {
-	operator Token
-	right    Expr
+	Operator Token
+	Right    Expr
 }
 type Ternary struct {
-	left      Expr
-	operatorL Token
-	middle    Expr
-	operatorR Token
-	right     Expr
+	Left      Expr
+	OperatorL Token
+	Middle    Expr
+	OperatorR Token
+	Right     Expr
 }
 
 func (b Binary) Accept(visitor ExprVisitor) any {

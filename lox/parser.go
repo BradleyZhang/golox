@@ -145,11 +145,11 @@ func (p *Parser) conditional() (Expr, error) {
 			return nil, err
 		}
 		expr = Ternary{
-			left:      expr,
-			operatorL: operatorL,
-			middle:    middle,
-			operatorR: operatorR,
-			right:     right,
+			Left:      expr,
+			OperatorL: operatorL,
+			Middle:    middle,
+			OperatorR: operatorR,
+			Right:     right,
 		}
 	}
 	return expr, nil

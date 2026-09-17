@@ -43,12 +43,12 @@ func (a *Interpreter) evaluate(expr Expr) evalResult {
 
 // impl StmtVisitor
 func (a *Interpreter) VisitExpression(e *Expression) any {
-	evalResult := a.evaluate(e.expression)
+	evalResult := a.evaluate(e.Expression)
 	return evalResult.err
 }
 
 func (a *Interpreter) VisitPrintStmt(p *PrintStmt) any {
-	evalResult := a.evaluate(p.expression)
+	evalResult := a.evaluate(p.Expression)
 	if evalResult.err != nil {
 		return evalResult.err
 	}
@@ -58,27 +58,27 @@ func (a *Interpreter) VisitPrintStmt(p *PrintStmt) any {
 
 // impl ExprVisitor
 func (i *Interpreter) VisitBinary(b *Binary) any {
-	left := i.evaluate(b.left)
+	left := i.evaluate(b.Left)
 	if left.err != nil {
 		return evalResult{nil, left.err}
 	}
-	right := i.evaluate(b.right)
+	right := i.evaluate(b.Right)
 	if right.err != nil {
 		return evalResult{nil, right.err}
 	}
-	switch b.operator.Type {
+	switch b.Operator.Type {
 	case Minus, Slash, Star, Greater, GreaterEqual, Less, LessEqual:
 		l, okL := left.value.(float64)
 		r, okR := right.value.(float64)
 		if !okL || !okR {
-			return evalResult{nil, &RuntimeError{b.operator, "Operand must be a number."}}
+			return evalResult{nil, &RuntimeError{b.Operator, "Operand must be a number."}}
 		}
-		switch b.operator.Type {
+		switch b.Operator.Type {
 		case Minus:
 			return evalResult{l - r, nil}
 		case Slash:
 			if r == 0 {
-				return evalResult{nil, &RuntimeError{b.operator, "Division by zero"}}
+				return evalResult{nil, &RuntimeError{b.Operator, "Division by zero"}}
 			}
 			return evalResult{l / r, nil}
 		case Star:
@@ -110,7 +110,7 @@ func (i *Interpreter) VisitBinary(b *Binary) any {
 				return evalResult{fmt.Sprint(left.value) + fmt.Sprint(right.value), nil}
 			}
 		}
-		return evalResult{nil, &RuntimeError{b.operator, "Operands must be two numbers or two strings."}}
+		return evalResult{nil, &RuntimeError{b.Operator, "Operands must be two numbers or two strings."}}
 	case BangEqual:
 		return evalResult{!isEqual(left.value, right.value), nil}
 	case EqualEqual:
@@ -121,21 +121,21 @@ func (i *Interpreter) VisitBinary(b *Binary) any {
 	return evalResult{nil, &RuntimeError{Token{}, "interpreter binary unreachable"}}
 }
 func (i *Interpreter) VisitGrouping(g *Grouping) any {
-	return i.evaluate(g.expression)
+	return i.evaluate(g.Expression)
 }
 func (i *Interpreter) VisitLiteral(l *Literal) any {
-	return evalResult{l.value, nil}
+	return evalResult{l.Value, nil}
 }
 func (i *Interpreter) VisitUnary(u *Unary) any {
-	right := i.evaluate(u.right)
+	right := i.evaluate(u.Right)
 	if right.err != nil {
 		return evalResult{nil, right.err}
 	}
-	switch u.operator.Type {
+	switch u.Operator.Type {
 	case Minus:
 		r, ok := right.value.(float64)
 		if !ok {
-			return evalResult{nil, &RuntimeError{u.operator, "Operand must be a number."}}
+			return evalResult{nil, &RuntimeError{u.Operator, "Operand must be a number."}}
 		}
 		return evalResult{-(r), nil}
 	case Bang:
@@ -145,16 +145,16 @@ func (i *Interpreter) VisitUnary(u *Unary) any {
 	return evalResult{nil, &RuntimeError{Token{}, "interpreter unary unreachable"}}
 }
 func (i *Interpreter) VisitTernary(t *Ternary) any {
-	if t.operatorL.Type == QuestionMark && t.operatorR.Type == Colon {
-		left := i.evaluate(t.left)
+	if t.OperatorL.Type == QuestionMark && t.OperatorR.Type == Colon {
+		left := i.evaluate(t.Left)
 		if left.err != nil {
 			return evalResult{nil, left.err}
 		}
 
 		if isTruthy(left.value) {
-			return i.evaluate(t.middle)
+			return i.evaluate(t.Middle)
 		}
-		return i.evaluate(t.right)
+		return i.evaluate(t.Right)
 	}
 	// Unreachable
 	return evalResult{nil, &RuntimeError{Token{}, "interpreter ternary unreachable"}}

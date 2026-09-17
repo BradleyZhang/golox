@@ -13,22 +13,22 @@ func (a *AstPrinter) Print(expr Expr) string {
 }
 
 func (a *AstPrinter) VisitBinary(b *Binary) any {
-	return a.parenthesized(b.operator.Lexeme, b.left, b.right)
+	return a.parenthesized(b.Operator.Lexeme, b.Left, b.Right)
 }
 func (a *AstPrinter) VisitGrouping(g *Grouping) any {
-	return a.parenthesized("group", g.expression)
+	return a.parenthesized("group", g.Expression)
 }
 func (a *AstPrinter) VisitLiteral(l *Literal) any {
-	if l.value == nil {
+	if l.Value == nil {
 		return "nil"
 	}
-	return fmt.Sprint(l.value)
+	return fmt.Sprint(l.Value)
 }
 func (a *AstPrinter) VisitUnary(u *Unary) any {
-	return a.parenthesized(u.operator.Lexeme, u.right)
+	return a.parenthesized(u.Operator.Lexeme, u.Right)
 }
 func (a *AstPrinter) VisitTernary(t *Ternary) any {
-	return a.parenthesized(t.operatorL.Lexeme+t.operatorR.Lexeme, t.left, t.middle, t.right)
+	return a.parenthesized(t.OperatorL.Lexeme+t.OperatorR.Lexeme, t.Left, t.Middle, t.Right)
 }
 
 func (a *AstPrinter) parenthesized(name string, exprs ...Expr) string {

@@ -8,10 +8,10 @@ type StmtVisitor interface {
 	VisitExpression(e *Expression) any
 }
 type PrintStmt struct {
-	expression Expr
+	Expression Expr
 }
 type Expression struct {
-	expression Expr
+	Expression Expr
 }
 
 func (p PrintStmt) Accept(visitor StmtVisitor) any {

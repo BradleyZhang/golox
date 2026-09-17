@@ -63,27 +63,27 @@ func buildExpr() string {
 	child := []StructTemp{}
 	child = append(child, StructTemp{
 		name:  "Binary",
-		attrs: []string{"left Expr", "operator Token", "right Expr"},
+		attrs: []string{"Left Expr", "Operator Token", "Right Expr"},
 	})
 	child = append(child, StructTemp{
 		name:  "Grouping",
-		attrs: []string{"expression Expr"},
+		attrs: []string{"Expression Expr"},
 	})
 	child = append(child, StructTemp{
 		name:  "Literal",
-		attrs: []string{"value any"},
+		attrs: []string{"Value any"},
 	})
 	child = append(child, StructTemp{
 		name:  "Unary",
-		attrs: []string{"operator Token", "right Expr"},
+		attrs: []string{"Operator Token", "Right Expr"},
 	})
 	child = append(child, StructTemp{
 		name:  "Ternary",
-		attrs: []string{"left Expr", "operatorL Token", "middle Expr", "operatorR Token", "right Expr"},
+		attrs: []string{"Left Expr", "OperatorL Token", "Middle Expr", "OperatorR Token", "Right Expr"},
 	})
 	child = append(child, StructTemp{
 		name:  "Variable",
-		attrs: []string{"name Token"},
+		attrs: []string{"Name Token"},
 	})
 	var names []string
 	for _, c := range child {
@@ -103,15 +103,15 @@ func buildStmt() string {
 	child := []StructTemp{}
 	child = append(child, StructTemp{
 		name:  "PrintStmt",
-		attrs: []string{"expression Expr"},
+		attrs: []string{"Expression Expr"},
 	})
 	child = append(child, StructTemp{
 		name:  "Expression",
-		attrs: []string{"expression Expr"},
+		attrs: []string{"Expression Expr"},
 	})
 	child = append(child, StructTemp{
 		name:  "VarStmt",
-		attrs: []string{"name Token", "initializer Expr"},
+		attrs: []string{"Name Token", "Initializer Expr"},
 	})
 	var names []string
 	for _, c := range child {
@@ -156,7 +156,7 @@ func defineVisitor(vname string, names []string) string {
 	b.WriteString(vname)
 	b.WriteString(" interface{\n")
 	for _, name := range names {
-		b.WriteString("visit")
+		b.WriteString("Visit")
 		b.WriteString(name)
 		b.WriteString("(")
 		b.WriteByte(strings.ToLower(name)[0])
@@ -177,7 +177,7 @@ func defineAccept(visitorName string, names []string) string {
 		b.WriteString(")Accept(visitor ")
 		b.WriteString(visitorName)
 		b.WriteString(")any{\n")
-		b.WriteString("return visitor.visit")
+		b.WriteString("return visitor.Visit")
 		b.WriteString(name)
 		b.WriteString("(&")
 		b.WriteByte(strings.ToLower(name)[0])
