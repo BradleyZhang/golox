@@ -4,6 +4,10 @@ import (
 	"bufio"
 	"errors"
 	"fmt"
+	interpreter2 "golox/lox/interpreter"
+	parser2 "golox/lox/parser"
+	scanner2 "golox/lox/scanner"
+	"golox/lox/token"
 	"io"
 	"os"
 )
@@ -15,12 +19,12 @@ var (
 type Lox struct {
 	hadError        bool
 	hadRuntimeError bool
-	interpreter     Interpreter
+	interpreter     interpreter2.Interpreter
 }
 
 func NewLox() *Lox {
 	return &Lox{
-		interpreter: Interpreter{},
+		interpreter: interpreter2.Interpreter{},
 	}
 }
 
@@ -71,32 +75,40 @@ func (l *Lox) runPrompt() error {
 	return nil
 }
 func (l *Lox) run(source string) {
-	scanner := NewScanner(source)
-	tokens := scanner.ScanTokens()
+	scanner := scanner2.NewScanner(source)
+	tokens, err := scanner.ScanTokens()
+	for _, e := range err {
+		l.LineError(e.Line, e.Msg)
+	}
 	fmt.Println("##### tokens #####")
-	fmt.Println(PrintTokens(tokens))
+	fmt.Println(token.PrintTokens(tokens))
 
-	parser := NewParser(tokens)
-	statements := parser.Parse()
+	p := parser2.NewParser(tokens)
+	statements, _err := p.Parse()
+	if _err != nil {
+		l.TokenError(_err.Token, _err.Msg)
+	}
 	if l.hadError {
 		return
 	}
 	fmt.Println("##### Output #####")
-	l.interpreter.Interpret(statements)
+	if err := l.interpreter.Interpret(statements); err != nil {
+		l.RuntimeError(err)
+	}
 
 }
 
 func (l *Lox) LineError(line int, msg string) {
 	l.report(line, "", msg)
 }
-func (l *Lox) TokenError(token Token, msg string) {
-	if token.Type == EOF {
-		l.report(token.Line, "at end", msg)
+func (l *Lox) TokenError(t token.Token, msg string) {
+	if t.Type == token.EOF {
+		l.report(t.Line, "at end", msg)
 	} else {
-		l.report(token.Line, "at '"+token.Lexeme+"'", msg)
+		l.report(t.Line, "at '"+t.Lexeme+"'", msg)
 	}
 }
-func (l *Lox) RuntimeError(err *RuntimeError) {
+func (l *Lox) RuntimeError(err *interpreter2.RuntimeError) {
 	fmt.Fprintln(os.Stderr, err.Error(), "\n[line ", err.Token.Line, "]")
 	l.hadRuntimeError = true
 }

@@ -44,10 +44,15 @@
 
 // exprStmt       → expression ";" ;
 // printStmt      → "print" expression ";" ;
-package lox
+package parser
+
+import (
+	"golox/lox/ast"
+	"golox/lox/token"
+)
 
 type Parser struct {
-	tokens  []Token
+	tokens  []token.Token
 	current int
 }
 type ParseError struct {
@@ -58,93 +63,92 @@ func (e ParseError) Error() string {
 	return e.Message
 }
 
-func NewParser(tokens []Token) *Parser {
+func NewParser(tokens []token.Token) *Parser {
 	return &Parser{tokens: tokens}
 }
 
-func (p *Parser) Parse() []Stmt {
-	statements := []Stmt{}
+type TokenError struct {
+	Token token.Token
+	Msg   string
+}
+
+func (p *Parser) Parse() ([]ast.Stmt, *TokenError) {
+	statements := []ast.Stmt{}
 	for !p.isAtEnd() {
 		statement, err := p.statement()
 		if err != nil {
-			return nil
+			return nil, err
 		}
 		statements = append(statements, statement)
 	}
-	return statements
-
-	// expr, err := p.expression()
-	// if err != nil {
-	// 	return nil
-	// }
-	// return expr
+	return statements, nil
 }
-func (p *Parser) statement() (Stmt, error) {
-	if p.match(Print) {
+func (p *Parser) statement() (ast.Stmt, *TokenError) {
+	if p.match(token.Print) {
 		return p.printStatement()
 	}
 	return p.expressionStatement()
 }
-func (p *Parser) printStatement() (Stmt, error) {
+func (p *Parser) printStatement() (ast.Stmt, *TokenError) {
 	value, err := p.expression()
 	if err != nil {
 		return nil, err
 	}
-	_, err = p.consume(Semicolon, "Expect ';' after value.")
+	_, err = p.consume(token.Semicolon, "Expect ';' after value.")
 	if err != nil {
 		return nil, err
 	}
-	return PrintStmt{value}, nil
+	return ast.PrintStmt{value}, nil
 }
-func (p *Parser) expressionStatement() (Stmt, error) {
+func (p *Parser) expressionStatement() (ast.Stmt, *TokenError) {
 	expr, err := p.expression()
 	if err != nil {
 		return nil, err
 	}
-	_, err = p.consume(Semicolon, "Expect ';' after value.")
+	_, err = p.consume(token.Semicolon, "Expect ';' after value.")
 	if err != nil {
 		return nil, err
 	}
-	return Expression{expr}, nil
+	return ast.Expression{expr}, nil
 
 }
-func (p *Parser) expression() (Expr, error) {
+func (p *Parser) expression() (ast.Expr, *TokenError) {
 	return p.comma()
 }
 
-func (p *Parser) comma() (Expr, error) {
+func (p *Parser) comma() (ast.Expr, *TokenError) {
 	expr, err := p.conditional()
 	if err != nil {
 		return nil, err
 	}
-	for p.match(Comma) {
+	for p.match(token.Comma) {
 		operator := p.previous()
 		right, err := p.conditional()
 		if err != nil {
 			return nil, err
 		}
-		expr = Binary{expr, operator, right}
+		expr = ast.Binary{expr, operator, right}
 	}
 	return expr, nil
 }
-func (p *Parser) conditional() (Expr, error) {
+func (p *Parser) conditional() (ast.Expr, *TokenError) {
 	expr, err := p.equality()
 	if err != nil {
 		return nil, err
 	}
-	if p.match(QuestionMark) {
+	if p.match(token.QuestionMark) {
 		operatorL := p.previous()
 		middle, err := p.equality()
 		if err != nil {
 			return nil, err
 		}
-		p.consume(Colon, "Expect ':' after expression.") // TODO 错误提示
+		p.consume(token.Colon, "Expect ':' after expression.") // TODO 错误提示
 		operatorR := p.previous()
 		right, err := p.conditional()
 		if err != nil {
 			return nil, err
 		}
-		expr = Ternary{
+		expr = ast.Ternary{
 			Left:      expr,
 			OperatorL: operatorL,
 			Middle:    middle,
@@ -155,99 +159,99 @@ func (p *Parser) conditional() (Expr, error) {
 	return expr, nil
 }
 
-func (p *Parser) equality() (Expr, error) {
+func (p *Parser) equality() (ast.Expr, *TokenError) {
 	expr, err := p.comparision()
 	if err != nil {
 		return nil, err
 	}
-	for p.match(BangEqual, EqualEqual) {
+	for p.match(token.BangEqual, token.EqualEqual) {
 		operator := p.previous()
 		right, err := p.comparision()
 		if err != nil {
 			return nil, err
 		}
-		expr = Binary{expr, operator, right}
+		expr = ast.Binary{expr, operator, right}
 	}
 	return expr, nil
 }
-func (p *Parser) comparision() (Expr, error) {
+func (p *Parser) comparision() (ast.Expr, *TokenError) {
 	expr, err := p.term()
 	if err != nil {
 		return nil, err
 	}
-	for p.match(Greater, GreaterEqual, Less, LessEqual) {
+	for p.match(token.Greater, token.GreaterEqual, token.Less, token.LessEqual) {
 		operator := p.previous()
 		right, err := p.term()
 		if err != nil {
 			return nil, err
 		}
-		expr = Binary{expr, operator, right}
+		expr = ast.Binary{expr, operator, right}
 	}
 	return expr, nil
 }
-func (p *Parser) term() (Expr, error) {
+func (p *Parser) term() (ast.Expr, *TokenError) {
 	expr, err := p.factor()
 	if err != nil {
 		return nil, err
 	}
-	for p.match(Minus, Plus) {
+	for p.match(token.Minus, token.Plus) {
 		operator := p.previous()
 		right, err := p.factor()
 		if err != nil {
 			return nil, err
 		}
-		expr = Binary{expr, operator, right}
+		expr = ast.Binary{expr, operator, right}
 	}
 	return expr, nil
 }
-func (p *Parser) factor() (Expr, error) {
+func (p *Parser) factor() (ast.Expr, *TokenError) {
 	expr, err := p.unary()
 	if err != nil {
 		return nil, err
 	}
-	for p.match(Slash, Star) {
+	for p.match(token.Slash, token.Star) {
 		operator := p.previous()
 		right, err := p.unary()
 		if err != nil {
 			return nil, err
 		}
-		expr = Binary{expr, operator, right}
+		expr = ast.Binary{expr, operator, right}
 	}
 	return expr, nil
 }
-func (p *Parser) unary() (Expr, error) {
-	if p.match(Bang, Minus) {
+func (p *Parser) unary() (ast.Expr, *TokenError) {
+	if p.match(token.Bang, token.Minus) {
 		operator := p.previous()
 		right, err := p.unary()
 		if err != nil {
 			return nil, err
 		}
-		return Unary{operator, right}, nil
+		return ast.Unary{operator, right}, nil
 	}
 	return p.binaryWithoutLeftOperand()
 }
 
 // 错误处理
 // 没有左操作数的二元操作符
-func (p *Parser) binaryWithoutLeftOperand() (Expr, error) {
+func (p *Parser) binaryWithoutLeftOperand() (ast.Expr, *TokenError) {
 	switch {
-	case p.match(Comma):
+	case p.match(token.Comma):
 		err := p.Error(p.previous(), "Expect left-hand operand before binary operator")
 		p.comma() // TODO 同步处理暂时无法测试，之后判断是应该comma 还是高一级，后面同理
 		return nil, err
-	case p.match(BangEqual, EqualEqual):
+	case p.match(token.BangEqual, token.EqualEqual):
 		err := p.Error(p.previous(), "Expect left-hand operand before binary operator")
 		p.equality()
 		return nil, err
-	case p.match(Less, LessEqual, Greater, GreaterEqual):
+	case p.match(token.Less, token.LessEqual, token.Greater, token.GreaterEqual):
 		err := p.Error(p.previous(), "Expect left-hand operand before binary operator")
 		p.comparision()
 		return nil, err
-	case p.match(Minus, Plus):
+	case p.match(token.Minus, token.Plus):
 		err := p.Error(p.previous(), "Expect left-hand operand before binary operator")
 		p.term()
 		return nil, err
-	case p.match(Slash, Star):
+	case p.match(token.Slash, token.Star):
 		err := p.Error(p.previous(), "Expect left-hand operand before binary operator")
 		p.factor()
 		return nil, err
@@ -255,34 +259,34 @@ func (p *Parser) binaryWithoutLeftOperand() (Expr, error) {
 	return p.primary()
 }
 
-func (p *Parser) primary() (Expr, error) {
-	if p.match(False) {
-		return Literal{false}, nil
+func (p *Parser) primary() (ast.Expr, *TokenError) {
+	if p.match(token.False) {
+		return ast.Literal{false}, nil
 	}
-	if p.match(True) {
-		return Literal{true}, nil
+	if p.match(token.True) {
+		return ast.Literal{true}, nil
 	}
-	if p.match(Nil) {
-		return Literal{nil}, nil
+	if p.match(token.Nil) {
+		return ast.Literal{nil}, nil
 	}
-	if p.match(Number, String) {
-		return Literal{p.previous().Literal}, nil
+	if p.match(token.Number, token.String) {
+		return ast.Literal{p.previous().Literal}, nil
 	}
-	if p.match(LeftParen) {
+	if p.match(token.LeftParen) {
 		expr, err := p.expression()
 		if err != nil {
 			return nil, err
 		}
-		if _, err := p.consume(RightParen, "Expect ')' after expression."); err != nil {
+		if _, err := p.consume(token.RightParen, "Expect ')' after expression."); err != nil {
 			return nil, err
 		}
-		return Grouping{expr}, nil
+		return ast.Grouping{expr}, nil
 	}
 
 	return nil, p.Error(p.peek(), "Expect expression.")
 }
 
-func (p *Parser) match(types ...TokenType) bool {
+func (p *Parser) match(types ...token.TokenType) bool {
 	for _, t := range types {
 		if p.check(t) {
 			p.advance()
@@ -292,51 +296,51 @@ func (p *Parser) match(types ...TokenType) bool {
 	return false
 }
 
-func (p *Parser) consume(tType TokenType, msg string) (Token, error) {
+func (p *Parser) consume(tType token.TokenType, msg string) (token.Token, *TokenError) {
 	if p.check(tType) {
 		return p.advance(), nil
 	}
-	return Token{}, p.Error(p.peek(), msg)
+	return token.Token{}, p.Error(p.peek(), msg)
 }
 
-func (p *Parser) Error(token Token, msg string) error {
-	GlobalLox.TokenError(token, msg)
-	return ParseError{Message: msg}
+func (p *Parser) Error(token token.Token, msg string) *TokenError {
+	// lox.GlobalLox.TokenError(token, msg)
+	return &TokenError{Token: token, Msg: msg}
 }
 func (p *Parser) synchronize() {
 	p.advance()
 	for !p.isAtEnd() {
-		if p.previous().Type == Semicolon {
+		if p.previous().Type == token.Semicolon {
 			return
 		}
 
 		switch p.peek().Type {
-		case Class, Fun, Var, For, If, While, Print, Return:
+		case token.Class, token.Fun, token.Var, token.For, token.If, token.While, token.Print, token.Return:
 			return
 		}
 		p.advance()
 	}
 }
 
-func (p *Parser) advance() Token {
+func (p *Parser) advance() token.Token {
 	if !p.isAtEnd() {
 		p.current++
 		return p.previous()
 	}
-	return Token{}
+	return token.Token{}
 }
-func (p *Parser) check(tType TokenType) bool {
+func (p *Parser) check(tType token.TokenType) bool {
 	if p.isAtEnd() {
 		return false
 	}
 	return p.peek().Type == tType
 }
 func (p *Parser) isAtEnd() bool {
-	return p.peek().Type == EOF
+	return p.peek().Type == token.EOF
 }
-func (p *Parser) peek() Token {
+func (p *Parser) peek() token.Token {
 	return p.tokens[p.current]
 }
-func (p *Parser) previous() Token {
+func (p *Parser) previous() token.Token {
 	return p.tokens[p.current-1]
 }

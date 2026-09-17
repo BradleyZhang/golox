@@ -1,4 +1,8 @@
-package lox
+package ast
+
+import (
+	"golox/lox/token"
+)
 
 // literal        → NUMBER | STRING | "true" | "false" | "nil" ;
 // grouping       → "(" expression ")" ;
@@ -19,7 +23,7 @@ type ExprVisitor interface {
 }
 type Binary struct {
 	Left     Expr
-	Operator Token
+	Operator token.Token
 	Right    Expr
 }
 type Grouping struct {
@@ -29,14 +33,14 @@ type Literal struct {
 	Value any
 }
 type Unary struct {
-	Operator Token
+	Operator token.Token
 	Right    Expr
 }
 type Ternary struct {
 	Left      Expr
-	OperatorL Token
+	OperatorL token.Token
 	Middle    Expr
-	OperatorR Token
+	OperatorR token.Token
 	Right     Expr
 }
 

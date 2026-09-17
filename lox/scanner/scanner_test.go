@@ -1,25 +1,28 @@
-package lox
+package scanner
 
-import "testing"
+import (
+	"golox/lox/token"
+	"testing"
+)
 
 func TestScanTokens(t *testing.T) {
 	source := "var average = (min + max) / 2;"
 
 	scanner := NewScanner(source)
-	tokens := scanner.ScanTokens()
-	wantType := []TokenType{
-		Var,
-		Identifier,
-		Equal,
-		LeftParen,
-		Identifier,
-		Plus,
-		Identifier,
-		RightParen,
-		Slash,
-		Number,
-		Semicolon,
-		EOF,
+	tokens, _ := scanner.ScanTokens()
+	wantType := []token.TokenType{
+		token.Var,
+		token.Identifier,
+		token.Equal,
+		token.LeftParen,
+		token.Identifier,
+		token.Plus,
+		token.Identifier,
+		token.RightParen,
+		token.Slash,
+		token.Number,
+		token.Semicolon,
+		token.EOF,
 	}
 	wantLiteral := []any{
 		nil, "average", nil, nil, "min", nil, "max", nil, nil, 2.0, nil, nil,

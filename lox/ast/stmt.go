@@ -1,4 +1,4 @@
-package lox
+package ast
 
 type Stmt interface {
 	Accept(visitor StmtVisitor) any

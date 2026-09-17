@@ -1,33 +1,44 @@
-package lox
+package scanner
 
-import "strconv"
+import (
+	"golox/lox/token"
+	"strconv"
+)
 
 type Scanner struct {
 	source  string
-	tokens  []Token
+	tokens  []token.Token
 	start   int
 	current int
 	line    int
 }
+type LineError struct {
+	Line int
+	Msg  string
+}
+
+func (e LineError) Error() string {
+	return e.Msg
+}
 
 var (
-	keywords = map[string]TokenType{
-		"and":    And,
-		"class":  Class,
-		"else":   Else,
-		"false":  False,
-		"for":    For,
-		"fun":    Fun,
-		"if":     If,
-		"nil":    Nil,
-		"or":     Or,
-		"print":  Print,
-		"return": Return,
-		"super":  Super,
-		"this":   This,
-		"true":   True,
-		"var":    Var,
-		"while":  While,
+	keywords = map[string]token.TokenType{
+		"and":    token.And,
+		"class":  token.Class,
+		"else":   token.Else,
+		"false":  token.False,
+		"for":    token.For,
+		"fun":    token.Fun,
+		"if":     token.If,
+		"nil":    token.Nil,
+		"or":     token.Or,
+		"print":  token.Print,
+		"return": token.Return,
+		"super":  token.Super,
+		"this":   token.This,
+		"true":   token.True,
+		"var":    token.Var,
+		"while":  token.While,
 	}
 )
 
@@ -36,65 +47,72 @@ func NewScanner(source string) *Scanner {
 	return s
 }
 
-func (s *Scanner) ScanTokens() []Token {
+func (s *Scanner) ScanTokens() ([]token.Token, []*LineError) {
+	var tErrors []*LineError
 	for !s.isAtEnd() {
 		s.start = s.current
-		s.scanToken()
+		err := s.scanToken()
+		if err != nil {
+			tErrors = append(tErrors, err)
+		}
 	}
-	s.tokens = append(s.tokens, Token{EOF, "", nil, s.line})
-	return s.tokens
+	s.tokens = append(s.tokens, token.Token{token.EOF, "", nil, s.line})
+	if len(tErrors) == 0 {
+		return s.tokens, nil
+	}
+	return s.tokens, tErrors
 }
 
-func (s *Scanner) scanToken() {
+func (s *Scanner) scanToken() *LineError {
 	c := s.advance()
 	switch c {
 	case '(':
-		s.addToken(LeftParen, nil)
+		s.addToken(token.LeftParen, nil)
 	case ')':
-		s.addToken(RightParen, nil)
+		s.addToken(token.RightParen, nil)
 	case '{':
-		s.addToken(LeftBrace, nil)
+		s.addToken(token.LeftBrace, nil)
 	case '}':
-		s.addToken(RightBrace, nil)
+		s.addToken(token.RightBrace, nil)
 	case ',':
-		s.addToken(Comma, nil)
+		s.addToken(token.Comma, nil)
 	case '.':
-		s.addToken(Dot, nil)
+		s.addToken(token.Dot, nil)
 	case '-':
-		s.addToken(Minus, nil)
+		s.addToken(token.Minus, nil)
 	case '+':
-		s.addToken(Plus, nil)
+		s.addToken(token.Plus, nil)
 	case ';':
-		s.addToken(Semicolon, nil)
+		s.addToken(token.Semicolon, nil)
 	case '*':
-		s.addToken(Star, nil)
+		s.addToken(token.Star, nil)
 	case '?':
-		s.addToken(QuestionMark, nil)
+		s.addToken(token.QuestionMark, nil)
 	case ':':
-		s.addToken(Colon, nil)
+		s.addToken(token.Colon, nil)
 	case '!':
 		if s.match('=') {
-			s.addToken(BangEqual, nil)
+			s.addToken(token.BangEqual, nil)
 		} else {
-			s.addToken(Bang, nil)
+			s.addToken(token.Bang, nil)
 		}
 	case '=':
 		if s.match('=') {
-			s.addToken(EqualEqual, nil)
+			s.addToken(token.EqualEqual, nil)
 		} else {
-			s.addToken(Equal, nil)
+			s.addToken(token.Equal, nil)
 		}
 	case '<':
 		if s.match('=') {
-			s.addToken(LessEqual, nil)
+			s.addToken(token.LessEqual, nil)
 		} else {
-			s.addToken(Less, nil)
+			s.addToken(token.Less, nil)
 		}
 	case '>':
 		if s.match('=') {
-			s.addToken(Greater, nil)
+			s.addToken(token.Greater, nil)
 		} else {
-			s.addToken(GreaterEqual, nil)
+			s.addToken(token.GreaterEqual, nil)
 		}
 	case '/':
 		if s.match('/') {
@@ -102,7 +120,7 @@ func (s *Scanner) scanToken() {
 				s.advance()
 			}
 		} else {
-			s.addToken(Slash, nil)
+			s.addToken(token.Slash, nil)
 		}
 	case ' ':
 	case '\r':
@@ -111,16 +129,21 @@ func (s *Scanner) scanToken() {
 		s.line++
 	// string literal
 	case '"':
-		s.string()
+		err := s.string()
+		if err != nil {
+			return err
+		}
 	default:
 		if isDigit(c) {
 			s.number()
 		} else if isAlpha(c) {
 			s.identifier()
 		} else {
-			GlobalLox.LineError(s.line, "Unexpected character.")
+			return &LineError{s.line, "Unexpected character."}
 		}
 	}
+	// Unreachable
+	return nil
 }
 
 func (s *Scanner) isAtEnd() bool {
@@ -133,13 +156,13 @@ func (s *Scanner) identifier() {
 	text := s.source[s.start:s.current]
 	tokenType, ok := keywords[text]
 	if !ok {
-		tokenType = Identifier
+		tokenType = token.Identifier
 		s.addToken(tokenType, text)
 	} else {
 		s.addToken(tokenType, nil)
 	}
 }
-func (s *Scanner) string() {
+func (s *Scanner) string() *LineError {
 	for s.peek() != '"' && !s.isAtEnd() {
 		if s.peek() == '\n' {
 			s.line++
@@ -147,12 +170,12 @@ func (s *Scanner) string() {
 		s.advance()
 	}
 	if s.isAtEnd() {
-		GlobalLox.LineError(s.line, "Unterminated string.")
-		return
+		return &LineError{s.line, "Unterminated string."}
 	}
 	s.advance()
 	value := s.source[s.start+1 : s.current-1]
-	s.addToken(String, value)
+	s.addToken(token.String, value)
+	return nil
 }
 func (s *Scanner) number() {
 	for isDigit(s.peek()) {
@@ -165,15 +188,15 @@ func (s *Scanner) number() {
 		}
 	}
 	f, _ := strconv.ParseFloat(s.source[s.start:s.current], 64)
-	s.addToken(Number, f)
+	s.addToken(token.Number, f)
 }
 func (s *Scanner) advance() byte {
 	s.current++
 	return s.source[s.current-1]
 }
-func (s *Scanner) addToken(tokenType TokenType, literal any) {
+func (s *Scanner) addToken(tokenType token.TokenType, literal any) {
 	text := s.source[s.start:s.current]
-	s.tokens = append(s.tokens, Token{tokenType, text, literal, s.line})
+	s.tokens = append(s.tokens, token.Token{tokenType, text, literal, s.line})
 }
 func (s *Scanner) match(expected byte) bool {
 	if s.isAtEnd() {
