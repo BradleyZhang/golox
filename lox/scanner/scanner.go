@@ -110,9 +110,9 @@ func (s *Scanner) scanToken() *LineError {
 		}
 	case '>':
 		if s.match('=') {
-			s.addToken(token.Greater, nil)
-		} else {
 			s.addToken(token.GreaterEqual, nil)
+		} else {
+			s.addToken(token.Greater, nil)
 		}
 	case '/':
 		if s.match('/') {
