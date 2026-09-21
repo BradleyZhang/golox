@@ -3,5 +3,5 @@
 # Run
 ```bash
 //golox
-$ go run ./tool/ast ./lox/expr.go
+$ go run ./tool/ast ./lox/ast
 ```

@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"os"
+	"os/exec"
 	"strings"
 )
 
@@ -10,6 +11,11 @@ type StructTemp struct {
 	name  string
 	attrs []string
 }
+
+var (
+	pkgName   = "ast"
+	importPkg = []string{"golox/lox/token"}
+)
 
 func main() {
 	args := os.Args
@@ -28,9 +34,23 @@ func main() {
 			fmt.Fprint(os.Stderr, err.Error())
 			os.Exit(1)
 		}
-		f.WriteString("package lox\n")
+		f.WriteString("package ")
+		f.WriteString(pkgName)
+		f.WriteString("\n")
+
+		f.WriteString("import(\n ")
+		for _, pkg := range importPkg {
+			f.WriteString("\"")
+			f.WriteString(pkg)
+			f.WriteString("\"\n")
+		}
+		f.WriteString(")\n")
+
 		f.WriteString(comment())
 		f.WriteString(buildExpr())
+		f.Close()
+		cmd := exec.Command("gofmt", "-w", path)
+		cmd.Run()
 	}
 	{
 		path := outputDir + "stmt.go"
@@ -39,8 +59,22 @@ func main() {
 			fmt.Fprint(os.Stderr, err.Error())
 			os.Exit(1)
 		}
-		f.WriteString("package lox\n")
+		f.WriteString("package ")
+		f.WriteString(pkgName)
+		f.WriteString("\n")
+
+		f.WriteString("import(\n ")
+		for _, pkg := range importPkg {
+			f.WriteString("\"")
+			f.WriteString(pkg)
+			f.WriteString("\"\n")
+		}
+		f.WriteString(")\n")
+
 		f.WriteString(buildStmt())
+		f.Close()
+		cmd := exec.Command("gofmt", "-w", path)
+		cmd.Run()
 	}
 	return
 }
@@ -63,7 +97,7 @@ func buildExpr() string {
 	child := []StructTemp{}
 	child = append(child, StructTemp{
 		name:  "Binary",
-		attrs: []string{"Left Expr", "Operator Token", "Right Expr"},
+		attrs: []string{"Left Expr", "Operator token.Token", "Right Expr"},
 	})
 	child = append(child, StructTemp{
 		name:  "Grouping",
@@ -75,15 +109,15 @@ func buildExpr() string {
 	})
 	child = append(child, StructTemp{
 		name:  "Unary",
-		attrs: []string{"Operator Token", "Right Expr"},
+		attrs: []string{"Operator token.Token", "Right Expr"},
 	})
 	child = append(child, StructTemp{
 		name:  "Ternary",
-		attrs: []string{"Left Expr", "OperatorL Token", "Middle Expr", "OperatorR Token", "Right Expr"},
+		attrs: []string{"Left Expr", "OperatorL token.Token", "Middle Expr", "OperatorR token.Token", "Right Expr"},
 	})
 	child = append(child, StructTemp{
 		name:  "Variable",
-		attrs: []string{"Name Token"},
+		attrs: []string{"Name token.Token"},
 	})
 	var names []string
 	for _, c := range child {
@@ -111,7 +145,7 @@ func buildStmt() string {
 	})
 	child = append(child, StructTemp{
 		name:  "VarStmt",
-		attrs: []string{"Name Token", "Initializer Expr"},
+		attrs: []string{"Name token.Token", "Initializer Expr"},
 	})
 	var names []string
 	for _, c := range child {
