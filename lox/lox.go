@@ -6,6 +6,7 @@ import (
 	"fmt"
 	interpreter2 "golox/lox/interpreter"
 	parser2 "golox/lox/parser"
+	"golox/lox/printer"
 	scanner2 "golox/lox/scanner"
 	"golox/lox/token"
 	"io"
@@ -88,6 +89,13 @@ func (l *Lox) run(source string) {
 	if _err != nil {
 		l.TokenError(_err.Token, _err.Msg)
 	}
+
+	fmt.Println("##### AST #####")
+	astPrinter := printer.AstPrinter{}
+	for _, stmt := range statements {
+		fmt.Println(astPrinter.PrintStmt(stmt))
+	}
+
 	if l.hadError {
 		return
 	}

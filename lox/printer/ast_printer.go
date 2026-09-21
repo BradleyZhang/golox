@@ -9,7 +9,21 @@ import (
 type AstPrinter struct {
 }
 
-func (a *AstPrinter) Print(expr ast.Expr) string {
+func (a *AstPrinter) PrintStmt(stmt ast.Stmt) string {
+	return stmt.Accept(a).(string)
+}
+
+// VisitExpression implements [ast.StmtVisitor].
+func (a *AstPrinter) VisitExpression(e *ast.Expression) any {
+	return a.PrintExpr(e.Expression)
+}
+
+// VisitPrintStmt implements [ast.StmtVisitor].
+func (a *AstPrinter) VisitPrintStmt(p *ast.PrintStmt) any {
+	return a.parenthesized("print", p.Expression)
+}
+
+func (a *AstPrinter) PrintExpr(expr ast.Expr) string {
 	return expr.Accept(a).(string)
 }
 
@@ -38,7 +52,7 @@ func (a *AstPrinter) parenthesized(name string, exprs ...ast.Expr) string {
 	builder.WriteString(name)
 	for _, expr := range exprs {
 		builder.WriteString(" ")
-		builder.WriteString(a.Print(expr))
+		builder.WriteString(a.PrintExpr(expr))
 	}
 	builder.WriteString(")")
 	return builder.String()
