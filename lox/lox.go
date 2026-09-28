@@ -4,10 +4,11 @@ import (
 	"bufio"
 	"errors"
 	"fmt"
-	interpreter2 "golox/lox/interpreter"
-	parser2 "golox/lox/parser"
+	"golox/lox/interpreter"
+	"golox/lox/loxerr"
+	"golox/lox/parser"
 	"golox/lox/printer"
-	scanner2 "golox/lox/scanner"
+	"golox/lox/scanner"
 	"golox/lox/token"
 	"io"
 	"os"
@@ -20,12 +21,12 @@ var (
 type Lox struct {
 	hadError        bool
 	hadRuntimeError bool
-	interpreter     interpreter2.Interpreter
+	interp          interpreter.Interpreter
 }
 
 func NewLox() *Lox {
 	return &Lox{
-		interpreter: interpreter2.Interpreter{},
+		interp: *interpreter.NewInterpreter(),
 	}
 }
 
@@ -76,31 +77,30 @@ func (l *Lox) runPrompt() error {
 	return nil
 }
 func (l *Lox) run(source string) {
-	scanner := scanner2.NewScanner(source)
-	tokens, err := scanner.ScanTokens()
+	scann := scanner.NewScanner(source)
+	tokens, err := scann.ScanTokens()
 	for _, e := range err {
 		l.LineError(e.Line, e.Msg)
 	}
 	fmt.Println("##### tokens #####")
 	fmt.Println(token.PrintTokens(tokens))
 
-	p := parser2.NewParser(tokens)
+	p := parser.NewParser(tokens)
 	statements, _err := p.Parse()
 	if _err != nil {
 		l.TokenError(_err.Token, _err.Msg)
 	}
 
+	if l.hadError {
+		return
+	}
 	fmt.Println("##### AST #####")
 	astPrinter := printer.AstPrinter{}
 	for _, stmt := range statements {
 		fmt.Println(astPrinter.PrintStmt(stmt))
 	}
-
-	if l.hadError {
-		return
-	}
 	fmt.Println("##### Output #####")
-	if err := l.interpreter.Interpret(statements); err != nil {
+	if err := l.interp.Interpret(statements); err != nil {
 		l.RuntimeError(err)
 	}
 
@@ -116,7 +116,7 @@ func (l *Lox) TokenError(t token.Token, msg string) {
 		l.report(t.Line, "at '"+t.Lexeme+"'", msg)
 	}
 }
-func (l *Lox) RuntimeError(err *interpreter2.RuntimeError) {
+func (l *Lox) RuntimeError(err *loxerr.RuntimeError) {
 	fmt.Fprintln(os.Stderr, err.Error(), "\n[line ", err.Token.Line, "]")
 	l.hadRuntimeError = true
 }

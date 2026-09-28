@@ -10,7 +10,14 @@ type AstPrinter struct {
 }
 
 func (a *AstPrinter) PrintStmt(stmt ast.Stmt) string {
-	return stmt.Accept(a).(string)
+	if stmt != nil {
+		return stmt.Accept(a).(string)
+	}
+	return ""
+}
+
+func (a *AstPrinter) VisitVarStmt(v *ast.VarStmt) any {
+	return a.PrintExpr(v.Initializer) //TODO
 }
 
 // VisitExpression implements [ast.StmtVisitor].
@@ -44,6 +51,9 @@ func (a *AstPrinter) VisitUnary(u *ast.Unary) any {
 }
 func (a *AstPrinter) VisitTernary(t *ast.Ternary) any {
 	return a.parenthesized(t.OperatorL.Lexeme+t.OperatorR.Lexeme, t.Left, t.Middle, t.Right)
+}
+func (a *AstPrinter) VisitVariable(v *ast.Variable) any {
+	return "var:" + v.Name.Lexeme
 }
 
 func (a *AstPrinter) parenthesized(name string, exprs ...ast.Expr) string {

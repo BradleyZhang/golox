@@ -24,7 +24,8 @@
 // binaryWithoutLeftOperand → 二元运算符 错误处理
 //				  | primary
 // primary        → NUMBER | STRING | "true" | "false" | "nil"
-//                | "(" expression ")" ; （字面量和括号表达式）
+//                | "(" expression ")"
+// 				  | IDENTIFIER; （字面量和括号表达式）
 
 // 优先级从低到高
 // | Name              | Operators         | Associates    |
@@ -38,7 +39,11 @@
 // | Unary  一元运算符 | `!` `-`           | Right  右结合 |
 
 // 语句
-// program        → statement* EOF ;
+// program        → declaration* EOF ;
+// declaration    → varDecl
+//				  | statement ;
+
+//varDecl         → "var" IDENTIFIER ("="expression)?";";
 // statement      → exprStmt
 //                | printStmt ;
 
@@ -75,7 +80,7 @@ type TokenError struct {
 func (p *Parser) Parse() ([]ast.Stmt, *TokenError) {
 	statements := []ast.Stmt{}
 	for !p.isAtEnd() {
-		statement, err := p.statement()
+		statement, err := p.declaration()
 		if err != nil {
 			return nil, err
 		}
@@ -83,6 +88,41 @@ func (p *Parser) Parse() ([]ast.Stmt, *TokenError) {
 	}
 	return statements, nil
 }
+func (p *Parser) declaration() (ast.Stmt, *TokenError) {
+	if p.match(token.Var) {
+		stmt, err := p.varDecl()
+		if err != nil {
+			p.synchronize()
+			return nil, err // TODO 这里不返回err，外层不知道err，是不是没法报错
+		}
+		return stmt, nil
+	}
+	stmt, err := p.statement()
+	if err != nil { //TODO 何时同步
+		p.synchronize()
+		return nil, err
+	}
+	return stmt, nil
+}
+func (p *Parser) varDecl() (ast.Stmt, *TokenError) {
+	name, err := p.consume(token.Identifier, "Expect variable name.")
+	if err != nil {
+		return nil, err //TODO err
+	}
+	var initializer ast.Expr
+	if p.match(token.Equal) {
+		initializer, err = p.expression()
+		if err != nil {
+			return nil, err //TODO 错误处理
+		}
+	}
+	_, err = p.consume(token.Semicolon, "Expect ';' after variable declaration.")
+	if err != nil {
+		return nil, err //TODO err
+	}
+	return ast.VarStmt{Name: name, Initializer: initializer}, nil
+}
+
 func (p *Parser) statement() (ast.Stmt, *TokenError) {
 	if p.match(token.Print) {
 		return p.printStatement()
@@ -272,6 +312,10 @@ func (p *Parser) primary() (ast.Expr, *TokenError) {
 	if p.match(token.Number, token.String) {
 		return ast.Literal{p.previous().Literal}, nil
 	}
+	if p.match(token.Identifier) {
+		return ast.Variable{Name: p.previous()}, nil
+	}
+
 	if p.match(token.LeftParen) {
 		expr, err := p.expression()
 		if err != nil {

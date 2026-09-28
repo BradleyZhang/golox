@@ -3,22 +3,23 @@ package interpreter
 import (
 	"fmt"
 	"golox/lox/ast"
+	"golox/lox/enviroment"
+	"golox/lox/loxerr"
 	"golox/lox/token"
 	"strconv"
 )
 
 type Interpreter struct {
+	env *enviroment.Env
 }
 
-type RuntimeError struct {
-	Token   token.Token
-	Message string
+func NewInterpreter() *Interpreter {
+	return &Interpreter{
+		env: enviroment.NewEnv(),
+	}
 }
 
-func (e *RuntimeError) Error() string {
-	return e.Message
-}
-func (a *Interpreter) Interpret(statements []ast.Stmt) *RuntimeError {
+func (a *Interpreter) Interpret(statements []ast.Stmt) *loxerr.RuntimeError {
 	for _, stmt := range statements {
 		if err := a.excute(stmt); err != nil {
 			return err
@@ -29,11 +30,11 @@ func (a *Interpreter) Interpret(statements []ast.Stmt) *RuntimeError {
 
 type evalResult struct { //evaluate result
 	value any
-	err   *RuntimeError
+	err   *loxerr.RuntimeError
 }
 
-func (a *Interpreter) excute(stmt ast.Stmt) *RuntimeError {
-	if err, ok := stmt.Accept(a).(*RuntimeError); ok {
+func (a *Interpreter) excute(stmt ast.Stmt) *loxerr.RuntimeError {
+	if err, ok := stmt.Accept(a).(*loxerr.RuntimeError); ok {
 		return err
 	}
 	return nil
@@ -57,6 +58,18 @@ func (a *Interpreter) VisitPrintStmt(p *ast.PrintStmt) any {
 	fmt.Println(stringify(evalResult.value))
 	return nil
 }
+func (a *Interpreter) VisitVarStmt(v *ast.VarStmt) any {
+	var value any
+	if v.Initializer != nil {
+		eval := a.evaluate(v.Initializer)
+		if eval.err != nil {
+			return eval.err
+		}
+		value = eval.value
+	}
+	a.env.Define(v.Name.Lexeme, value)
+	return nil
+}
 
 // impl ExprVisitor
 func (i *Interpreter) VisitBinary(b *ast.Binary) any {
@@ -73,14 +86,14 @@ func (i *Interpreter) VisitBinary(b *ast.Binary) any {
 		l, okL := left.value.(float64)
 		r, okR := right.value.(float64)
 		if !okL || !okR {
-			return evalResult{nil, &RuntimeError{b.Operator, "Operand must be a number."}}
+			return evalResult{nil, &loxerr.RuntimeError{b.Operator, "Operand must be a number."}}
 		}
 		switch b.Operator.Type {
 		case token.Minus:
 			return evalResult{l - r, nil}
 		case token.Slash:
 			if r == 0 {
-				return evalResult{nil, &RuntimeError{b.Operator, "Division by zero"}}
+				return evalResult{nil, &loxerr.RuntimeError{b.Operator, "Division by zero"}}
 			}
 			return evalResult{l / r, nil}
 		case token.Star:
@@ -112,7 +125,7 @@ func (i *Interpreter) VisitBinary(b *ast.Binary) any {
 				return evalResult{fmt.Sprint(left.value) + fmt.Sprint(right.value), nil}
 			}
 		}
-		return evalResult{nil, &RuntimeError{b.Operator, "Operands must be two numbers or two strings."}}
+		return evalResult{nil, &loxerr.RuntimeError{b.Operator, "Operands must be two numbers or two strings."}}
 	case token.BangEqual:
 		return evalResult{!isEqual(left.value, right.value), nil}
 	case token.EqualEqual:
@@ -120,7 +133,7 @@ func (i *Interpreter) VisitBinary(b *ast.Binary) any {
 
 	}
 	// Unreachable
-	return evalResult{nil, &RuntimeError{token.Token{}, "interpreter binary unreachable"}}
+	return evalResult{nil, &loxerr.RuntimeError{token.Token{}, "interpreter binary unreachable"}}
 }
 func (i *Interpreter) VisitGrouping(g *ast.Grouping) any {
 	return i.evaluate(g.Expression)
@@ -137,14 +150,14 @@ func (i *Interpreter) VisitUnary(u *ast.Unary) any {
 	case token.Minus:
 		r, ok := right.value.(float64)
 		if !ok {
-			return evalResult{nil, &RuntimeError{u.Operator, "Operand must be a number."}}
+			return evalResult{nil, &loxerr.RuntimeError{u.Operator, "Operand must be a number."}}
 		}
 		return evalResult{-(r), nil}
 	case token.Bang:
 		return evalResult{!isTruthy(right.value), nil}
 	}
 	// Unreachable
-	return evalResult{nil, &RuntimeError{token.Token{}, "interpreter unary unreachable"}}
+	return evalResult{nil, &loxerr.RuntimeError{token.Token{}, "interpreter unary unreachable"}}
 }
 func (i *Interpreter) VisitTernary(t *ast.Ternary) any {
 	if t.OperatorL.Type == token.QuestionMark && t.OperatorR.Type == token.Colon {
@@ -159,8 +172,16 @@ func (i *Interpreter) VisitTernary(t *ast.Ternary) any {
 		return i.evaluate(t.Right)
 	}
 	// Unreachable
-	return evalResult{nil, &RuntimeError{token.Token{}, "interpreter ternary unreachable"}}
+	return evalResult{nil, &loxerr.RuntimeError{token.Token{}, "interpreter ternary unreachable"}}
 }
+func (i *Interpreter) VisitVariable(v *ast.Variable) any {
+	value, err := i.env.Get(v.Name)
+	if err != nil {
+		return evalResult{value: nil, err: err.(*loxerr.RuntimeError)}
+	}
+	return evalResult{value: value}
+}
+
 func isTruthy(v any) bool {
 	if v == nil {
 		return false

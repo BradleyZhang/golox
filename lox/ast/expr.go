@@ -20,6 +20,7 @@ type ExprVisitor interface {
 	VisitLiteral(l *Literal) any
 	VisitUnary(u *Unary) any
 	VisitTernary(t *Ternary) any
+	VisitVariable(v *Variable) any
 }
 type Binary struct {
 	Left     Expr
@@ -43,6 +44,9 @@ type Ternary struct {
 	OperatorR token.Token
 	Right     Expr
 }
+type Variable struct {
+	Name token.Token
+}
 
 func (b Binary) Accept(visitor ExprVisitor) any {
 	return visitor.VisitBinary(&b)
@@ -58,4 +62,7 @@ func (u Unary) Accept(visitor ExprVisitor) any {
 }
 func (t Ternary) Accept(visitor ExprVisitor) any {
 	return visitor.VisitTernary(&t)
+}
+func (v Variable) Accept(visitor ExprVisitor) any {
+	return visitor.VisitVariable(&v)
 }
