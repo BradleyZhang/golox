@@ -28,21 +28,21 @@ func PrintTokens(tokens []Token) string {
 
 	w := tabwriter.NewWriter(&b, 0, 0, 2, ' ', 0)
 
-	fmt.Fprintln(w, "TYPE\tLEXEME\tLITERAL\tLINE")
-	fmt.Fprintln(w, "----\t------\t-------\t----")
+	_, _ = fmt.Fprintln(w, "TYPE\tLEXEME\tLITERAL\tLINE")
+	_, _ = fmt.Fprintln(w, "----\t------\t-------\t----")
 
 	for _, t := range tokens {
-		fmt.Fprintf(
+		_, _ = fmt.Fprintf(
 			w,
 			"%v\t%q\t%v\t%d\n",
-			t.Type,
+			TokenTypeString[t.Type],
 			t.Lexeme,
 			t.Literal,
 			t.Line,
 		)
 	}
 
-	w.Flush()
+	_ = w.Flush()
 
 	return b.String()
 }

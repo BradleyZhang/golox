@@ -53,3 +53,51 @@ const (
 
 	EOF TokenType = 38
 )
+
+var TokenTypeString = map[TokenType]string{
+	LeftParen:    "LeftParen",
+	RightParen:   "RightParen",
+	LeftBrace:    "LeftBrace",
+	RightBrace:   "RightBrace",
+	Comma:        "Comma",
+	Dot:          "Dot",
+	Minus:        "Minus",
+	Plus:         "Plus",
+	Semicolon:    "Semicolon",
+	Slash:        "Slash",
+	Star:         "Star",
+	QuestionMark: "QuestionMark",
+	Colon:        "Colon",
+
+	Bang:         "Bang",
+	BangEqual:    "BangEqual",
+	Equal:        "Equal",
+	EqualEqual:   "EqualEqual",
+	Greater:      "Greater",
+	GreaterEqual: "GreaterEqual",
+	Less:         "Less",
+	LessEqual:    "LessEqual",
+
+	Identifier: "Identifier",
+	String:     "String",
+	Number:     "Number",
+
+	And:    "And",
+	Class:  "Class",
+	Else:   "Else",
+	False:  "False",
+	Fun:    "Fun",
+	For:    "For",
+	If:     "If",
+	Nil:    "Nil",
+	Or:     "Or",
+	Print:  "Print",
+	Return: "Return",
+	Super:  "Super",
+	This:   "This",
+	True:   "True",
+	Var:    "Var",
+	While:  "While",
+
+	EOF: "EOF",
+}
