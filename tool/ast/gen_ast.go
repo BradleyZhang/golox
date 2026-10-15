@@ -19,6 +19,7 @@ var (
 
 func main() {
 	args := os.Args
+	var errs []error
 	if len(args) != 2 {
 		fmt.Fprint(os.Stderr, "Usage: gen_ast <output directory>")
 		os.Exit(64)
@@ -34,23 +35,44 @@ func main() {
 			fmt.Fprint(os.Stderr, err.Error())
 			os.Exit(1)
 		}
-		f.WriteString("package ")
-		f.WriteString(pkgName)
-		f.WriteString("\n")
-
-		f.WriteString("import(\n ")
-		for _, pkg := range importPkg {
-			f.WriteString("\"")
-			f.WriteString(pkg)
-			f.WriteString("\"\n")
+		if _, err := f.WriteString("package "); err != nil {
+			errs = append(errs, err)
 		}
-		f.WriteString(")\n")
+		if _, err := f.WriteString(pkgName); err != nil {
+			errs = append(errs, err)
+		}
+		if _, err := f.WriteString("\n"); err != nil {
+			errs = append(errs, err)
+		}
 
-		f.WriteString(comment())
-		f.WriteString(buildExpr())
-		f.Close()
+		if _, err := f.WriteString("import(\n "); err != nil {
+			errs = append(errs, err)
+		}
+		for _, pkg := range importPkg {
+			if _, err := f.WriteString("\""); err != nil {
+				errs = append(errs, err)
+			}
+			if _, err := f.WriteString(pkg); err != nil {
+				errs = append(errs, err)
+			}
+			if _, err := f.WriteString("\"\n"); err != nil {
+				errs = append(errs, err)
+			}
+		}
+		if _, err := f.WriteString(")\n"); err != nil {
+			errs = append(errs, err)
+		}
+
+		if _, err := f.WriteString(comment()); err != nil {
+			errs = append(errs, err)
+		}
+		if _, err := f.WriteString(buildExpr()); err != nil {
+			errs = append(errs, err)
+		}
+
+		_ = f.Close()
 		cmd := exec.Command("gofmt", "-w", path)
-		cmd.Run()
+		_ = cmd.Run()
 	}
 	{
 		path := outputDir + "stmt.go"
@@ -59,22 +81,43 @@ func main() {
 			fmt.Fprint(os.Stderr, err.Error())
 			os.Exit(1)
 		}
-		f.WriteString("package ")
-		f.WriteString(pkgName)
-		f.WriteString("\n")
-
-		f.WriteString("import(\n ")
-		for _, pkg := range importPkg {
-			f.WriteString("\"")
-			f.WriteString(pkg)
-			f.WriteString("\"\n")
+		if _, err := f.WriteString("package "); err != nil {
+			errs = append(errs, err)
 		}
-		f.WriteString(")\n")
+		if _, err := f.WriteString(pkgName); err != nil {
+			errs = append(errs, err)
+		}
+		if _, err := f.WriteString("\n"); err != nil {
+			errs = append(errs, err)
+		}
 
-		f.WriteString(buildStmt())
-		f.Close()
+		if _, err := f.WriteString("import(\n "); err != nil {
+			errs = append(errs, err)
+		}
+		for _, pkg := range importPkg {
+			if _, err := f.WriteString("\""); err != nil {
+				errs = append(errs, err)
+			}
+			if _, err := f.WriteString(pkg); err != nil {
+				errs = append(errs, err)
+			}
+			if _, err := f.WriteString("\"\n"); err != nil {
+				errs = append(errs, err)
+			}
+		}
+		if _, err := f.WriteString(")\n"); err != nil {
+			errs = append(errs, err)
+		}
+
+		if _, err := f.WriteString(buildStmt()); err != nil {
+			errs = append(errs, err)
+		}
+		_ = f.Close()
 		cmd := exec.Command("gofmt", "-w", path)
-		cmd.Run()
+		_ = cmd.Run()
+	}
+	for _, err := range errs {
+		_, _ = fmt.Fprintln(os.Stderr, err)
 	}
 	return
 }
