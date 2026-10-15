@@ -186,6 +186,10 @@ func buildStmt() string {
 		attrs: []string{"Expression Expr"},
 	})
 	child = append(child, StructTemp{
+		name:  "Block",
+		attrs: []string{"Statements []Stmt"},
+	})
+	child = append(child, StructTemp{
 		name:  "Expression",
 		attrs: []string{"Expression Expr"},
 	})

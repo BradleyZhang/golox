@@ -15,8 +15,20 @@ func (a *AstPrinter) PrintStmt(stmt ast.Stmt) string {
 	}
 	return ""
 }
+func (a *AstPrinter) VisitBlock(b *ast.Block) any {
+	builder := strings.Builder{}
+	builder.WriteString("{\n")
+	for _, stmt := range b.Statements {
+		builder.WriteByte('\t')
+		s := a.PrintStmt(stmt)
+		builder.WriteString(strings.ReplaceAll(s, "\n", "\n\t"))
+		builder.WriteByte('\n')
+	}
+	builder.WriteString("}")
+	return builder.String()
+}
 func (a *AstPrinter) VisitVarStmt(v *ast.VarStmt) any {
-	return a.PrintExpr(v.Initializer) //TODO
+	return "(var " + v.Name.Lexeme + " '" + a.PrintExpr(v.Initializer) + "')" //TODO
 }
 
 // VisitExpression implements [ast.StmtVisitor].
@@ -55,7 +67,7 @@ func (a *AstPrinter) VisitTernary(t *ast.Ternary) any {
 	return a.parenthesized(t.OperatorL.Lexeme+t.OperatorR.Lexeme, t.Left, t.Middle, t.Right)
 }
 func (a *AstPrinter) VisitVariable(v *ast.Variable) any {
-	return "var:" + v.Name.Lexeme
+	return v.Name.Lexeme
 }
 
 func (a *AstPrinter) parenthesized(name string, exprs ...ast.Expr) string {

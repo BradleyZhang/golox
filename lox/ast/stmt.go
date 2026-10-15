@@ -9,11 +9,15 @@ type Stmt interface {
 }
 type StmtVisitor interface {
 	VisitPrintStmt(p *PrintStmt) any
+	VisitBlock(b *Block) any
 	VisitExpression(e *Expression) any
 	VisitVarStmt(v *VarStmt) any
 }
 type PrintStmt struct {
 	Expression Expr
+}
+type Block struct {
+	Statements []Stmt
 }
 type Expression struct {
 	Expression Expr
@@ -25,6 +29,9 @@ type VarStmt struct {
 
 func (p PrintStmt) Accept(visitor StmtVisitor) any {
 	return visitor.VisitPrintStmt(&p)
+}
+func (b Block) Accept(visitor StmtVisitor) any {
+	return visitor.VisitBlock(&b)
 }
 func (e Expression) Accept(visitor StmtVisitor) any {
 	return visitor.VisitExpression(&e)

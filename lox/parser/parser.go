@@ -45,10 +45,13 @@
 // declaration    → varDecl
 //				  | statement ;
 
-//varDecl         → "var" IDENTIFIER ("="expression)?";";
+// varDecl         → "var" IDENTIFIER ("="expression)?";";
 // statement      → exprStmt
-//                | printStmt ;
-
+//
+//	               | printStmt
+//				   | block
+//
+// block          → "{" declaraion* "}"
 // exprStmt       → expression ";" ;
 // printStmt      → "print" expression ";" ;
 package parser
@@ -129,6 +132,13 @@ func (p *Parser) statement() (ast.Stmt, *TokenError) {
 	if p.match(token.Print) {
 		return p.printStatement()
 	}
+	if p.match(token.LeftBrace) {
+		stmts, err := p.block()
+		if err != nil {
+			return nil, err
+		}
+		return ast.Block{Statements: stmts}, nil
+	}
 	return p.expressionStatement()
 }
 func (p *Parser) printStatement() (ast.Stmt, *TokenError) {
@@ -153,6 +163,21 @@ func (p *Parser) expressionStatement() (ast.Stmt, *TokenError) {
 	}
 	return ast.Expression{Expression: expr}, nil
 
+}
+func (p *Parser) block() ([]ast.Stmt, *TokenError) {
+	statements := []ast.Stmt{}
+	for !p.check(token.RightBrace) && !p.isAtEnd() {
+		stmt, err := p.declaration()
+		if err != nil {
+			return nil, err
+		}
+		statements = append(statements, stmt)
+	}
+	_, err := p.consume(token.RightBrace, "Expect '}' after block")
+	if err != nil {
+		return nil, err
+	}
+	return statements, nil
 }
 func (p *Parser) expression() (ast.Expr, *TokenError) {
 	return p.assignment()

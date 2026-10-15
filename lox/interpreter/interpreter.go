@@ -6,6 +6,7 @@ import (
 	"golox/lox/enviroment"
 	"golox/lox/loxerr"
 	"golox/lox/token"
+	"os"
 	"strconv"
 )
 
@@ -36,6 +37,8 @@ type evalResult struct { //evaluate result
 func (a *Interpreter) excute(stmt ast.Stmt) *loxerr.RuntimeError {
 	if err, ok := stmt.Accept(a).(*loxerr.RuntimeError); ok {
 		return err
+	} else if err != nil {
+		fmt.Fprint(os.Stderr, "unreachable:excute")
 	}
 	return nil
 }
@@ -68,6 +71,25 @@ func (a *Interpreter) VisitVarStmt(v *ast.VarStmt) any {
 		value = eval.value
 	}
 	a.env.Define(v.Name.Lexeme, value)
+	return nil
+}
+func (a *Interpreter) VisitBlock(b *ast.Block) any {
+	err := a.excuteBlock(b.Statements, enviroment.NewEnvWithEnclosing(a.env))
+	if err != nil {
+		return err
+	}
+	return nil
+}
+func (a *Interpreter) excuteBlock(statements []ast.Stmt, env *enviroment.Env) error {
+	previous := a.env
+	a.env = env
+	defer func() { a.env = previous }()
+	for _, stmt := range statements {
+		err := a.excute(stmt)
+		if err != nil {
+			return err
+		}
+	}
 	return nil
 }
 
