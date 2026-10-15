@@ -15,7 +15,6 @@ func (a *AstPrinter) PrintStmt(stmt ast.Stmt) string {
 	}
 	return ""
 }
-
 func (a *AstPrinter) VisitVarStmt(v *ast.VarStmt) any {
 	return a.PrintExpr(v.Initializer) //TODO
 }
@@ -34,6 +33,9 @@ func (a *AstPrinter) PrintExpr(expr ast.Expr) string {
 	return expr.Accept(a).(string)
 }
 
+func (p *AstPrinter) VisitAssign(a *ast.Assign) any {
+	return "(= " + a.Name.Lexeme + " " + p.PrintExpr(a.Value)
+}
 func (a *AstPrinter) VisitBinary(b *ast.Binary) any {
 	return a.parenthesized(b.Operator.Lexeme, b.Left, b.Right)
 }

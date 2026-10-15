@@ -15,12 +15,17 @@ type Expr interface {
 	Accept(visitor ExprVisitor) any
 }
 type ExprVisitor interface {
+	VisitAssign(a *Assign) any
 	VisitBinary(b *Binary) any
 	VisitGrouping(g *Grouping) any
 	VisitLiteral(l *Literal) any
 	VisitUnary(u *Unary) any
 	VisitTernary(t *Ternary) any
 	VisitVariable(v *Variable) any
+}
+type Assign struct {
+	Name  token.Token
+	Value Expr
 }
 type Binary struct {
 	Left     Expr
@@ -48,6 +53,9 @@ type Variable struct {
 	Name token.Token
 }
 
+func (a Assign) Accept(visitor ExprVisitor) any {
+	return visitor.VisitAssign(&a)
+}
 func (b Binary) Accept(visitor ExprVisitor) any {
 	return visitor.VisitBinary(&b)
 }

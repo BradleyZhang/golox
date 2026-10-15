@@ -138,6 +138,10 @@ func buildExpr() string {
 	b.WriteString(defineParent("Expr"))
 	child := []StructTemp{}
 	child = append(child, StructTemp{
+		name:  "Assign",
+		attrs: []string{"Name token.Token", "Value Expr"},
+	})
+	child = append(child, StructTemp{
 		name:  "Binary",
 		attrs: []string{"Left Expr", "Operator token.Token", "Right Expr"},
 	})

@@ -21,5 +21,13 @@ func (e *Env) Get(name token.Token) (any, error) { //TODO 之后把RuntimeError�
 	if v, ok := e.values[name.Lexeme]; ok {
 		return v, nil
 	}
-	return nil, &loxerr.RuntimeError{Token: name, Message: "Undefined variable '" + name.Lexeme + "'."}
+	return nil, loxerr.NewRuntimeError(name, "Undefined variable '"+name.Lexeme+"'.")
+}
+func (e *Env) Assign(name token.Token, value any) error {
+	if _, ok := e.values[name.Lexeme]; ok {
+		e.values[name.Lexeme] = value
+		return nil
+	} else {
+		return loxerr.NewRuntimeError(name, "Undefined variable '"+name.Lexeme+"'.")
+	}
 }

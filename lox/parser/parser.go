@@ -12,7 +12,9 @@
 
 // 优先级由低到高，每个规则只匹配>=自身优先级的表达式
 // 以 1+2*3为例， term 要求左右是高一级的完整factor，这样把表达式切成 (1) + (2*3) ，可以理解为低优先级的决定在哪里切开，然后把左右交给高优先级
-// expression     → equality ;
+// expression     → assignment ;
+// assignment     → IDENTIFIER "=" assignment
+//					| equality
 // comma          → conditional ((",") conditional )* ; (逗号运算符)
 // conditional    → equality ( "?" equality ":" conditional )?
 // equality       → comparison ( ( "!=" | "==" ) comparison )* ; (等于)
@@ -153,9 +155,30 @@ func (p *Parser) expressionStatement() (ast.Stmt, *TokenError) {
 
 }
 func (p *Parser) expression() (ast.Expr, *TokenError) {
-	return p.comma()
+	return p.assignment()
+}
+func (p *Parser) assignment() (ast.Expr, *TokenError) {
+	expr, err := p.comma() // 原文是 p.equality TODO
+	if err != nil {
+		return nil, err
+	}
+	if p.match(token.Equal) {
+		equals := p.previous()
+		value, err := p.assignment()
+		if err != nil {
+			return nil, err
+		}
+		if v, ok := expr.(ast.Variable); ok {
+			name := v.Name
+			return ast.Assign{Name: name, Value: value}, nil
+		} else {
+			return nil, p.Error(equals, "Invalid assignment target.")
+		}
+	}
+	return expr, nil
 }
 
+// TODO 怎么导向comma
 func (p *Parser) comma() (ast.Expr, *TokenError) {
 	expr, err := p.conditional()
 	if err != nil {

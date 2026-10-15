@@ -72,6 +72,17 @@ func (a *Interpreter) VisitVarStmt(v *ast.VarStmt) any {
 }
 
 // impl ExprVisitor
+func (i *Interpreter) VisitAssign(a *ast.Assign) any {
+	eval := i.evaluate(a.Value)
+	if eval.err != nil {
+		return eval.err
+	}
+	err := i.env.Assign(a.Name, eval.value)
+	if err != nil {
+		return evalResult{value: nil, err: err.(*loxerr.RuntimeError)}
+	}
+	return evalResult{value: eval.value, err: nil}
+}
 func (i *Interpreter) VisitBinary(b *ast.Binary) any {
 	left := i.evaluate(b.Left)
 	if left.err != nil {
