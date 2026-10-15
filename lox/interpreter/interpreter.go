@@ -86,14 +86,14 @@ func (i *Interpreter) VisitBinary(b *ast.Binary) any {
 		l, okL := left.value.(float64)
 		r, okR := right.value.(float64)
 		if !okL || !okR {
-			return evalResult{nil, &loxerr.RuntimeError{b.Operator, "Operand must be a number."}}
+			return evalResult{value: nil, err: loxerr.NewRuntimeError(b.Operator, "Operand must be a number.")}
 		}
 		switch b.Operator.Type {
 		case token.Minus:
 			return evalResult{l - r, nil}
 		case token.Slash:
 			if r == 0 {
-				return evalResult{nil, &loxerr.RuntimeError{b.Operator, "Division by zero"}}
+				return evalResult{value: nil, err: loxerr.NewRuntimeError(b.Operator, "Division by zero")}
 			}
 			return evalResult{l / r, nil}
 		case token.Star:
@@ -125,7 +125,7 @@ func (i *Interpreter) VisitBinary(b *ast.Binary) any {
 				return evalResult{fmt.Sprint(left.value) + fmt.Sprint(right.value), nil}
 			}
 		}
-		return evalResult{nil, &loxerr.RuntimeError{b.Operator, "Operands must be two numbers or two strings."}}
+		return evalResult{value: nil, err: loxerr.NewRuntimeError(b.Operator, "Operands must be two numbers or two strings.")}
 	case token.BangEqual:
 		return evalResult{!isEqual(left.value, right.value), nil}
 	case token.EqualEqual:
@@ -133,7 +133,7 @@ func (i *Interpreter) VisitBinary(b *ast.Binary) any {
 
 	}
 	// Unreachable
-	return evalResult{nil, &loxerr.RuntimeError{token.Token{}, "interpreter binary unreachable"}}
+	return evalResult{value: nil, err: loxerr.NewRuntimeError(token.Token{}, "interpreter binary unreachable")}
 }
 func (i *Interpreter) VisitGrouping(g *ast.Grouping) any {
 	return i.evaluate(g.Expression)
@@ -150,14 +150,14 @@ func (i *Interpreter) VisitUnary(u *ast.Unary) any {
 	case token.Minus:
 		r, ok := right.value.(float64)
 		if !ok {
-			return evalResult{nil, &loxerr.RuntimeError{u.Operator, "Operand must be a number."}}
+			return evalResult{value: nil, err: loxerr.NewRuntimeError(u.Operator, "Operand must be a number.")}
 		}
 		return evalResult{-(r), nil}
 	case token.Bang:
 		return evalResult{!isTruthy(right.value), nil}
 	}
 	// Unreachable
-	return evalResult{nil, &loxerr.RuntimeError{token.Token{}, "interpreter unary unreachable"}}
+	return evalResult{value: nil, err: loxerr.NewRuntimeError(token.Token{}, "interpreter unary unreachable")}
 }
 func (i *Interpreter) VisitTernary(t *ast.Ternary) any {
 	if t.OperatorL.Type == token.QuestionMark && t.OperatorR.Type == token.Colon {
@@ -172,7 +172,7 @@ func (i *Interpreter) VisitTernary(t *ast.Ternary) any {
 		return i.evaluate(t.Right)
 	}
 	// Unreachable
-	return evalResult{nil, &loxerr.RuntimeError{token.Token{}, "interpreter ternary unreachable"}}
+	return evalResult{value: nil, err: loxerr.NewRuntimeError(token.Token{}, "interpreter ternary unreachable")}
 }
 func (i *Interpreter) VisitVariable(v *ast.Variable) any {
 	value, err := i.env.Get(v.Name)

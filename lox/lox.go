@@ -40,7 +40,11 @@ func (l *Lox) Main(args []string) {
 			os.Exit(1) //TODO 错误码
 		}
 	} else {
-		l.runPrompt()
+		err := l.runPrompt()
+		if err != nil {
+			fmt.Fprint(os.Stderr, err.Error())
+			os.Exit(1)
+		}
 	}
 }
 

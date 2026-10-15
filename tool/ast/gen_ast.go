@@ -119,7 +119,6 @@ func main() {
 	for _, err := range errs {
 		_, _ = fmt.Fprintln(os.Stderr, err)
 	}
-	return
 }
 func comment() string {
 	return `

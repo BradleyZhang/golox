@@ -138,7 +138,7 @@ func (p *Parser) printStatement() (ast.Stmt, *TokenError) {
 	if err != nil {
 		return nil, err
 	}
-	return ast.PrintStmt{value}, nil
+	return ast.PrintStmt{Expression: value}, nil
 }
 func (p *Parser) expressionStatement() (ast.Stmt, *TokenError) {
 	expr, err := p.expression()
@@ -149,7 +149,7 @@ func (p *Parser) expressionStatement() (ast.Stmt, *TokenError) {
 	if err != nil {
 		return nil, err
 	}
-	return ast.Expression{expr}, nil
+	return ast.Expression{Expression: expr}, nil
 
 }
 func (p *Parser) expression() (ast.Expr, *TokenError) {
@@ -167,7 +167,7 @@ func (p *Parser) comma() (ast.Expr, *TokenError) {
 		if err != nil {
 			return nil, err
 		}
-		expr = ast.Binary{expr, operator, right}
+		expr = ast.Binary{Left: expr, Operator: operator, Right: right}
 	}
 	return expr, nil
 }
@@ -210,7 +210,7 @@ func (p *Parser) equality() (ast.Expr, *TokenError) {
 		if err != nil {
 			return nil, err
 		}
-		expr = ast.Binary{expr, operator, right}
+		expr = ast.Binary{Left: expr, Operator: operator, Right: right}
 	}
 	return expr, nil
 }
@@ -225,7 +225,7 @@ func (p *Parser) comparision() (ast.Expr, *TokenError) {
 		if err != nil {
 			return nil, err
 		}
-		expr = ast.Binary{expr, operator, right}
+		expr = ast.Binary{Left: expr, Operator: operator, Right: right}
 	}
 	return expr, nil
 }
@@ -240,7 +240,7 @@ func (p *Parser) term() (ast.Expr, *TokenError) {
 		if err != nil {
 			return nil, err
 		}
-		expr = ast.Binary{expr, operator, right}
+		expr = ast.Binary{Left: expr, Operator: operator, Right: right}
 	}
 	return expr, nil
 }
@@ -255,7 +255,7 @@ func (p *Parser) factor() (ast.Expr, *TokenError) {
 		if err != nil {
 			return nil, err
 		}
-		expr = ast.Binary{expr, operator, right}
+		expr = ast.Binary{Left: expr, Operator: operator, Right: right}
 	}
 	return expr, nil
 }
@@ -266,7 +266,7 @@ func (p *Parser) unary() (ast.Expr, *TokenError) {
 		if err != nil {
 			return nil, err
 		}
-		return ast.Unary{operator, right}, nil
+		return ast.Unary{Operator: operator, Right: right}, nil
 	}
 	return p.binaryWithoutLeftOperand()
 }
@@ -301,16 +301,16 @@ func (p *Parser) binaryWithoutLeftOperand() (ast.Expr, *TokenError) {
 
 func (p *Parser) primary() (ast.Expr, *TokenError) {
 	if p.match(token.False) {
-		return ast.Literal{false}, nil
+		return ast.Literal{Value: false}, nil
 	}
 	if p.match(token.True) {
-		return ast.Literal{true}, nil
+		return ast.Literal{Value: true}, nil
 	}
 	if p.match(token.Nil) {
-		return ast.Literal{nil}, nil
+		return ast.Literal{Value: nil}, nil
 	}
 	if p.match(token.Number, token.String) {
-		return ast.Literal{p.previous().Literal}, nil
+		return ast.Literal{Value: p.previous().Literal}, nil
 	}
 	if p.match(token.Identifier) {
 		return ast.Variable{Name: p.previous()}, nil
@@ -324,7 +324,7 @@ func (p *Parser) primary() (ast.Expr, *TokenError) {
 		if _, err := p.consume(token.RightParen, "Expect ')' after expression."); err != nil {
 			return nil, err
 		}
-		return ast.Grouping{expr}, nil
+		return ast.Grouping{Expression: expr}, nil
 	}
 
 	return nil, p.Error(p.peek(), "Expect expression.")

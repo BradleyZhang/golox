@@ -56,7 +56,7 @@ func (s *Scanner) ScanTokens() ([]token.Token, []*LineError) {
 			tErrors = append(tErrors, err)
 		}
 	}
-	s.tokens = append(s.tokens, token.Token{token.EOF, "", nil, s.line})
+	s.tokens = append(s.tokens, token.Token{Type: token.EOF, Lexeme: "", Literal: nil, Line: s.line})
 	if len(tErrors) == 0 {
 		return s.tokens, nil
 	}
@@ -196,7 +196,7 @@ func (s *Scanner) advance() byte {
 }
 func (s *Scanner) addToken(tokenType token.TokenType, literal any) {
 	text := s.source[s.start:s.current]
-	s.tokens = append(s.tokens, token.Token{tokenType, text, literal, s.line})
+	s.tokens = append(s.tokens, token.Token{Type: tokenType, Lexeme: text, Literal: literal, Line: s.line})
 }
 func (s *Scanner) match(expected byte) bool {
 	if s.isAtEnd() {

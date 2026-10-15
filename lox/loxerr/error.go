@@ -7,6 +7,13 @@ type RuntimeError struct { //TODO 之后抽出
 	Message string
 }
 
+func NewRuntimeError(t token.Token, msg string) *RuntimeError {
+	return &RuntimeError{
+		Token:   t,
+		Message: msg,
+	}
+}
+
 func (e *RuntimeError) Error() string {
 	return e.Message
 }
