@@ -125,6 +125,9 @@ func (p *Parser) varDecl() (ast.Stmt, *TokenError) {
 			return nil, err //TODO 错误处理
 		}
 	}
+	if initializer == nil {
+		initializer = ast.Literal{Value: nil}
+	}
 	_, err = p.consume(token.Semicolon, "Expect ';' after variable declaration.")
 	if err != nil {
 		return nil, err //TODO err
