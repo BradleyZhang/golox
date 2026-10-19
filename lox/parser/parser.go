@@ -64,6 +64,7 @@ import (
 type Parser struct {
 	tokens  []token.Token
 	current int
+	isREPL  bool
 }
 type ParseError struct {
 	Message string
@@ -75,6 +76,9 @@ func (e ParseError) Error() string {
 
 func NewParser(tokens []token.Token) *Parser {
 	return &Parser{tokens: tokens}
+}
+func NewParserREPL(tokens []token.Token) *Parser {
+	return &Parser{tokens: tokens, isREPL: true}
 }
 
 type TokenError struct {
@@ -156,6 +160,9 @@ func (p *Parser) expressionStatement() (ast.Stmt, *TokenError) {
 	expr, err := p.expression()
 	if err != nil {
 		return nil, err
+	}
+	if p.isREPL { // REPL 下 expression 不需要 ; 结尾,且以print 包裹
+		return ast.PrintStmt{Expression: expr}, nil
 	}
 	_, err = p.consume(token.Semicolon, "Expect ';' after value.")
 	if err != nil {

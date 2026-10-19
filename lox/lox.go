@@ -53,7 +53,7 @@ func (l *Lox) runFile(path string) error {
 	if err != nil {
 		return err
 	}
-	l.run(string(data))
+	l.run(string(data), false)
 	if l.hadError {
 		os.Exit(65)
 	}
@@ -75,12 +75,12 @@ func (l *Lox) runPrompt() error {
 				return err
 			}
 		}
-		l.run(line)
+		l.run(line, true)
 		l.hadError = false
 	}
 	return nil
 }
-func (l *Lox) run(source string) {
+func (l *Lox) run(source string, isREPL bool) {
 	scann := scanner.NewScanner(source)
 	tokens, err := scann.ScanTokens()
 	for _, e := range err {
@@ -89,7 +89,12 @@ func (l *Lox) run(source string) {
 	fmt.Println("##### tokens #####")
 	fmt.Println(token.PrintTokens(tokens))
 
-	p := parser.NewParser(tokens)
+	var p *parser.Parser
+	if isREPL {
+		p = parser.NewParserREPL(tokens)
+	} else {
+		p = parser.NewParser(tokens)
+	}
 	statements, _err := p.Parse()
 	if _err != nil {
 		l.TokenError(_err.Token, _err.Msg)
