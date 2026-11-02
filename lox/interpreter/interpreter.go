@@ -99,6 +99,10 @@ func (a *Interpreter) VisitWhileStmt(w *ast.WhileStmt) any {
 		if err != nil {
 			return err
 		}
+		eval = a.evaluate(w.Condition)
+		if eval.err != nil {
+			return eval.err
+		}
 	}
 	return nil
 }
