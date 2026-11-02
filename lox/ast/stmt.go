@@ -13,6 +13,7 @@ type StmtVisitor interface {
 	VisitBlock(b *Block) any
 	VisitExpression(e *Expression) any
 	VisitVarStmt(v *VarStmt) any
+	VisitWhileStmt(w *WhileStmt) any
 }
 type IfStmt struct {
 	Condition  Expr
@@ -32,6 +33,10 @@ type VarStmt struct {
 	Name        token.Token
 	Initializer Expr
 }
+type WhileStmt struct {
+	Condition Expr
+	Body      Stmt
+}
 
 func (i IfStmt) Accept(visitor StmtVisitor) any {
 	return visitor.VisitIfStmt(&i)
@@ -47,4 +52,7 @@ func (e Expression) Accept(visitor StmtVisitor) any {
 }
 func (v VarStmt) Accept(visitor StmtVisitor) any {
 	return visitor.VisitVarStmt(&v)
+}
+func (w WhileStmt) Accept(visitor StmtVisitor) any {
+	return visitor.VisitWhileStmt(&w)
 }

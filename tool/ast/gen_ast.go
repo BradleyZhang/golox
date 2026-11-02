@@ -205,6 +205,10 @@ func buildStmt() string {
 		name:  "VarStmt",
 		attrs: []string{"Name token.Token", "Initializer Expr"},
 	})
+	child = append(child, StructTemp{
+		name:  "WhileStmt",
+		attrs: []string{"Condition Expr", "Body Stmt"},
+	})
 	var names []string
 	for _, c := range child {
 		names = append(names, c.name)

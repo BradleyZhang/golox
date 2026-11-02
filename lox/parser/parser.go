@@ -52,13 +52,16 @@
 //
 //	                   | ifStmt
 //		               | printStmt
+//					   | whileStmt
 //					   | block;
 //
 // block          → "{" declaraion* "}"
 // exprStmt       → expression ";" ;
 // printStmt      → "print" expression ";" ;
-// ifStmt           "if" "(" expression ")" statement
+// ifStmt         ->  "if" "(" expression ")" statement
 // .				( "else" statement)?;
+
+// whileStmt	  -> "while" "(" expression ")" statement;
 package parser
 
 import (
@@ -147,6 +150,9 @@ func (p *Parser) statement() (ast.Stmt, *TokenError) {
 	if p.match(token.Print) {
 		return p.printStatement()
 	}
+	if p.match(token.While) {
+		return p.whileStatement()
+	}
 	if p.match(token.LeftBrace) {
 		stmts, err := p.block()
 		if err != nil {
@@ -194,6 +200,26 @@ func (p *Parser) printStatement() (ast.Stmt, *TokenError) {
 		return nil, err
 	}
 	return ast.PrintStmt{Expression: value}, nil
+}
+func (p *Parser) whileStatement() (ast.Stmt, *TokenError) {
+	_, err := p.consume(token.LeftParen, "Expect '(' after 'while'.")
+	if err != nil {
+		return nil, err
+	}
+	condition, err := p.expression()
+	if err != nil {
+		return nil, err
+	}
+	_, err = p.consume(token.RightParen, "Expect ')' after condition.")
+	if err != nil {
+		return nil, err
+	}
+	body, err := p.statement()
+	if err != nil {
+		return nil, err
+	}
+
+	return ast.WhileStmt{Condition: condition, Body: body}, nil
 }
 func (p *Parser) expressionStatement() (ast.Stmt, *TokenError) {
 	expr, err := p.expression()

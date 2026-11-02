@@ -30,6 +30,9 @@ func (a *AstPrinter) VisitBlock(b *ast.Block) any {
 func (a *AstPrinter) VisitVarStmt(v *ast.VarStmt) any {
 	return "(var " + v.Name.Lexeme + " '" + a.PrintExpr(v.Initializer) + "')" //TODO
 }
+func (a *AstPrinter) VisitWhileStmt(w *ast.WhileStmt) any {
+	return "while statement"
+}
 
 // VisitExpression implements [ast.StmtVisitor].
 func (a *AstPrinter) VisitExpression(e *ast.Expression) any {

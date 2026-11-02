@@ -89,6 +89,19 @@ func (a *Interpreter) VisitVarStmt(v *ast.VarStmt) any {
 	a.env.Define(v.Name.Lexeme, value)
 	return nil
 }
+func (a *Interpreter) VisitWhileStmt(w *ast.WhileStmt) any {
+	eval := a.evaluate(w.Condition)
+	if eval.err != nil {
+		return eval.err
+	}
+	for isTruthy(eval.value) {
+		err := a.excute(w.Body)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
 func (a *Interpreter) VisitBlock(b *ast.Block) any {
 	err := a.excuteBlock(b.Statements, enviroment.NewEnvWithEnclosing(a.env))
 	if err != nil {
@@ -194,11 +207,12 @@ func (i *Interpreter) VisitLogical(l *ast.Logical) any {
 	}
 	left := leftEval.value
 
-	if l.Operator.Type == token.Or {
+	switch l.Operator.Type {
+	case token.Or:
 		if isTruthy(left) { // or 短路
 			return evalResult{left, nil}
 		}
-	} else if l.Operator.Type == token.And {
+	case token.And:
 		if !isTruthy(left) { // and 短路
 			return evalResult{left, nil}
 		}
