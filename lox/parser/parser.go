@@ -49,7 +49,7 @@
 
 // varDecl         → "var" IDENTIFIER ("="expression)?";";
 // statement           → exprStmt
-//
+//.					   | forStmt
 //	                   | ifStmt
 //		               | printStmt
 //					   | whileStmt
@@ -62,6 +62,9 @@
 // .				( "else" statement)?;
 
 // whileStmt	  -> "while" "(" expression ")" statement;
+// forStmt        -> "for" "(" (varDecl | exprStmt | ";")
+// .						expression? ";"
+// .						expression> ")" statement;
 package parser
 
 import (
@@ -144,6 +147,9 @@ func (p *Parser) varDecl() (ast.Stmt, *TokenError) {
 }
 
 func (p *Parser) statement() (ast.Stmt, *TokenError) {
+	if p.match(token.For) {
+		return p.forStatement()
+	}
 	if p.match(token.If) {
 		return p.ifStatement()
 	}
@@ -161,6 +167,63 @@ func (p *Parser) statement() (ast.Stmt, *TokenError) {
 		return ast.Block{Statements: stmts}, nil
 	}
 	return p.expressionStatement()
+}
+func (p *Parser) forStatement() (ast.Stmt, *TokenError) {
+	_, err := p.consume(token.LeftParen, "Expect '(' after 'for'.")
+	if err != nil {
+		return nil, err
+	}
+	var initializer ast.Stmt
+	if p.match(token.Semicolon) {
+		initializer = nil
+	} else if p.match(token.Var) {
+		initializer, err = p.varDecl()
+	} else {
+		initializer, err = p.expressionStatement()
+	}
+	if err != nil {
+		return nil, err
+	}
+	var condition ast.Expr
+	if !p.check(token.Semicolon) {
+		condition, err = p.expression()
+	}
+	if err != nil {
+		return nil, err
+	}
+	_, err = p.consume(token.Semicolon, "Expect ';' after loop condition.")
+	if err != nil {
+		return nil, err
+	}
+	var increment ast.Expr
+	if !p.check(token.RightParen) {
+		increment, err = p.expression()
+		if err != nil {
+			return nil, err
+		}
+	}
+	_, err = p.consume(token.RightParen, "Expect ')' after for clauses.")
+	if err != nil {
+		return nil, err
+	}
+	body, err := p.statement()
+	if err != nil {
+		return nil, err
+	}
+
+	if increment != nil {
+		body = ast.Block{ // while 后面的代码块中加 increment
+			Statements: []ast.Stmt{body, ast.Expression{Expression: increment}},
+		}
+	}
+	if condition == nil {
+		condition = ast.Literal{Value: true}
+	}
+	body = ast.WhileStmt{Condition: condition, Body: body}
+	if initializer != nil {
+		body = ast.Block{Statements: []ast.Stmt{initializer, body}}
+	}
+	return body, nil
 }
 func (p *Parser) ifStatement() (ast.Stmt, *TokenError) {
 	_, err := p.consume(token.LeftParen, "Expect '(' after 'if' .")
