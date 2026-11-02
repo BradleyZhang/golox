@@ -229,7 +229,7 @@ func (p *Parser) expression() (ast.Expr, *TokenError) {
 	return p.assignment()
 }
 func (p *Parser) assignment() (ast.Expr, *TokenError) {
-	expr, err := p.comma() // 原文是 p.equality TODO
+	expr, err := p.or()
 	if err != nil {
 		return nil, err
 	}
@@ -245,6 +245,36 @@ func (p *Parser) assignment() (ast.Expr, *TokenError) {
 		} else {
 			return nil, p.Error(equals, "Invalid assignment target.")
 		}
+	}
+	return expr, nil
+}
+func (p *Parser) or() (ast.Expr, *TokenError) {
+	expr, err := p.and()
+	if err != nil {
+		return nil, err
+	}
+	for p.match(token.Or) {
+		operator := p.previous()
+		right, err := p.and()
+		if err != nil {
+			return nil, err
+		}
+		expr = ast.Logical{Left: expr, Operator: operator, Right: right}
+	}
+	return expr, nil
+}
+func (p *Parser) and() (ast.Expr, *TokenError) {
+	expr, err := p.comma()
+	if err != nil {
+		return nil, err
+	}
+	for p.match(token.And) {
+		operator := p.previous()
+		right, err := p.comma()
+		if err != nil {
+			return nil, err
+		}
+		expr = ast.Logical{Left: expr, Operator: operator, Right: right}
 	}
 	return expr, nil
 }

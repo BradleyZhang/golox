@@ -56,6 +56,9 @@ func (a *AstPrinter) VisitBinary(b *ast.Binary) any {
 func (a *AstPrinter) VisitGrouping(g *ast.Grouping) any {
 	return a.parenthesized("group", g.Expression)
 }
+func (a *AstPrinter) VisitLogical(l *ast.Logical) any {
+	return "logical expr"
+}
 func (a *AstPrinter) VisitLiteral(l *ast.Literal) any {
 	if l.Value == nil {
 		return "nil"

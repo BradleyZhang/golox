@@ -187,6 +187,24 @@ func (i *Interpreter) VisitBinary(b *ast.Binary) any {
 func (i *Interpreter) VisitGrouping(g *ast.Grouping) any {
 	return i.evaluate(g.Expression)
 }
+func (i *Interpreter) VisitLogical(l *ast.Logical) any {
+	leftEval := i.evaluate(l.Left)
+	if leftEval.err != nil {
+		return evalResult{nil, leftEval.err}
+	}
+	left := leftEval.value
+
+	if l.Operator.Type == token.Or {
+		if isTruthy(left) { // or 短路
+			return evalResult{left, nil}
+		}
+	} else if l.Operator.Type == token.And {
+		if !isTruthy(left) { // and 短路
+			return evalResult{left, nil}
+		}
+	}
+	return i.evaluate(l.Right)
+}
 func (i *Interpreter) VisitLiteral(l *ast.Literal) any {
 	return evalResult{l.Value, nil}
 }

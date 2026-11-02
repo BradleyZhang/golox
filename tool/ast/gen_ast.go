@@ -154,6 +154,10 @@ func buildExpr() string {
 		attrs: []string{"Value any"},
 	})
 	child = append(child, StructTemp{
+		name:  "Logical",
+		attrs: []string{"Left Expr", "Operator token.Token", "Right Expr"},
+	})
+	child = append(child, StructTemp{
 		name:  "Unary",
 		attrs: []string{"Operator token.Token", "Right Expr"},
 	})
