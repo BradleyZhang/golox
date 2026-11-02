@@ -40,7 +40,9 @@ func (a *AstPrinter) VisitExpression(e *ast.Expression) any {
 func (a *AstPrinter) VisitPrintStmt(p *ast.PrintStmt) any {
 	return a.parenthesized("print", p.Expression)
 }
-
+func (a *AstPrinter) VisitIfStmt(i *ast.IfStmt) any {
+	return "if stmt"
+}
 func (a *AstPrinter) PrintExpr(expr ast.Expr) string {
 	return expr.Accept(a).(string)
 }

@@ -8,10 +8,16 @@ type Stmt interface {
 	Accept(visitor StmtVisitor) any
 }
 type StmtVisitor interface {
+	VisitIfStmt(i *IfStmt) any
 	VisitPrintStmt(p *PrintStmt) any
 	VisitBlock(b *Block) any
 	VisitExpression(e *Expression) any
 	VisitVarStmt(v *VarStmt) any
+}
+type IfStmt struct {
+	Condition  Expr
+	ThenBranch Stmt
+	ElseBranch Stmt
 }
 type PrintStmt struct {
 	Expression Expr
@@ -27,6 +33,9 @@ type VarStmt struct {
 	Initializer Expr
 }
 
+func (i IfStmt) Accept(visitor StmtVisitor) any {
+	return visitor.VisitIfStmt(&i)
+}
 func (p PrintStmt) Accept(visitor StmtVisitor) any {
 	return visitor.VisitPrintStmt(&p)
 }

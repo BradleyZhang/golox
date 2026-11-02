@@ -182,6 +182,10 @@ func buildStmt() string {
 
 	child := []StructTemp{}
 	child = append(child, StructTemp{
+		name:  "IfStmt",
+		attrs: []string{"Condition Expr", "ThenBranch Stmt", "ElseBranch Stmt"},
+	})
+	child = append(child, StructTemp{
 		name:  "PrintStmt",
 		attrs: []string{"Expression Expr"},
 	})

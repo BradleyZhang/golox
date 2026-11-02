@@ -2,8 +2,7 @@ package token
 
 type TokenType int
 
-const (
-	// Single-character tokens.
+const ( // Single-character tokens.
 	LeftParen    TokenType = 0  // (
 	RightParen   TokenType = 1  // )
 	LeftBrace    TokenType = 2  // {

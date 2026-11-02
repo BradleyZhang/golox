@@ -52,6 +52,22 @@ func (a *Interpreter) VisitExpression(e *ast.Expression) any {
 	evalResult := a.evaluate(e.Expression)
 	return evalResult.err
 }
+func (a *Interpreter) VisitIfStmt(i *ast.IfStmt) any {
+	evalResult := a.evaluate(i.Condition)
+	if evalResult.err != nil {
+		return evalResult.err
+	}
+	if isTruthy(evalResult.value) {
+		if err := a.excute(i.ThenBranch); err != nil {
+			return err
+		}
+	} else if i.ElseBranch != nil {
+		if err := a.excute(i.ElseBranch); err != nil {
+			return err
+		}
+	}
+	return nil
+}
 
 func (a *Interpreter) VisitPrintStmt(p *ast.PrintStmt) any {
 	evalResult := a.evaluate(p.Expression)

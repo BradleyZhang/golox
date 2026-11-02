@@ -14,7 +14,9 @@
 // 以 1+2*3为例， term 要求左右是高一级的完整factor，这样把表达式切成 (1) + (2*3) ，可以理解为低优先级的决定在哪里切开，然后把左右交给高优先级
 // expression     → assignment ;
 // assignment     → IDENTIFIER "=" assignment
-//					| equality
+//					| logic_or
+// logic_or       -> logic_and ("or" logic_and)*
+// logic_and      -> comma ("and" comma)*
 // comma          → conditional ((",") conditional )* ; (逗号运算符)
 // conditional    → equality ( "?" equality ":" conditional )?
 // equality       → comparison ( ( "!=" | "==" ) comparison )* ; (等于)
@@ -46,14 +48,17 @@
 //				  | statement ;
 
 // varDecl         → "var" IDENTIFIER ("="expression)?";";
-// statement      → exprStmt
+// statement           → exprStmt
 //
-//	               | printStmt
-//				   | block
+//	                   | ifStmt
+//		               | printStmt
+//					   | block;
 //
 // block          → "{" declaraion* "}"
 // exprStmt       → expression ";" ;
 // printStmt      → "print" expression ";" ;
+// ifStmt           "if" "(" expression ")" statement
+// .				( "else" statement)?;
 package parser
 
 import (
@@ -136,6 +141,9 @@ func (p *Parser) varDecl() (ast.Stmt, *TokenError) {
 }
 
 func (p *Parser) statement() (ast.Stmt, *TokenError) {
+	if p.match(token.If) {
+		return p.ifStatement()
+	}
 	if p.match(token.Print) {
 		return p.printStatement()
 	}
@@ -147,6 +155,34 @@ func (p *Parser) statement() (ast.Stmt, *TokenError) {
 		return ast.Block{Statements: stmts}, nil
 	}
 	return p.expressionStatement()
+}
+func (p *Parser) ifStatement() (ast.Stmt, *TokenError) {
+	_, err := p.consume(token.LeftParen, "Expect '(' after 'if' .")
+	if err != nil {
+		return nil, err
+	}
+	condition, err := p.expression()
+	if err != nil {
+		return nil, err
+	}
+	_, err = p.consume(token.RightParen, "Expect '(' after if condition.")
+	if err != nil {
+		return nil, err
+	}
+
+	thenBranch, err := p.statement()
+	if err != nil {
+		return nil, err
+	}
+	var elseBranch ast.Stmt
+	if p.match(token.Else) {
+		elseBranch, err = p.statement()
+		if err != nil {
+			return nil, err
+		}
+	}
+	return ast.IfStmt{Condition: condition, ThenBranch: thenBranch, ElseBranch: elseBranch}, nil
+
 }
 func (p *Parser) printStatement() (ast.Stmt, *TokenError) {
 	value, err := p.expression()

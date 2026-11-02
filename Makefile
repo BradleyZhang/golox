@@ -8,3 +8,8 @@ debug:
 	./bin/golox-debug
 run: build
 	./bin/golox
+gen: 
+	go run ./tool/ast ./lox/ast
+
+run: build
+	./bin/golox
